@@ -1,15 +1,19 @@
 import React, { useState } from 'react'
-import { Users, Globe, Star } from 'lucide-react'
+import { Users, Globe, Star, TrendingUp, Settings2 } from 'lucide-react'
 import { DataEntryPage } from './DataEntryPage'
 import { MMContentPage } from '../mm/MMContentPage'
 import { TJPersonalBrandPage } from '../tj-brand/TJBrandPage'
+import { SalesOutreachPage } from '../sales/SalesPage'
+import { ProcessesPage } from '../processes/ProcessesPage'
 
-type Section = 'client' | 'mm' | 'tj'
+type Section = 'client' | 'mm' | 'tj' | 'sales' | 'processes'
 
-const sections: { id: Section; label: string; icon: React.ElementType; description: string }[] = [
-  { id: 'client', label: 'Client Data Entry', icon: Users, description: 'Weekly metrics for client accounts' },
-  { id: 'mm', label: 'MM Content', icon: Globe, description: 'Myntmore company content metrics' },
-  { id: 'tj', label: 'TJ Personal Brand', icon: Star, description: 'TJ personal branding metrics' },
+const sections: { id: Section; label: string; icon: React.ElementType }[] = [
+  { id: 'client',    label: 'Client Data Entry',  icon: Users      },
+  { id: 'mm',        label: 'MM Content',          icon: Globe      },
+  { id: 'tj',        label: 'TJ Personal Brand',   icon: Star       },
+  { id: 'sales',     label: 'Sales & Outreach',    icon: TrendingUp },
+  { id: 'processes', label: 'Processes',           icon: Settings2  },
 ]
 
 export function DataEntryHub() {
@@ -21,7 +25,7 @@ export function DataEntryHub() {
       <div className="border-b bg-card sticky top-0 z-10">
         <div className="px-6 pt-5 pb-0">
           <h1 className="text-xl font-bold tracking-tight mb-4">Data Entry</h1>
-          <div className="flex gap-1">
+          <div className="flex gap-1 flex-wrap">
             {sections.map((s) => {
               const isActive = active === s.id
               return (
@@ -45,9 +49,11 @@ export function DataEntryHub() {
 
       {/* Section Content */}
       <div>
-        {active === 'client' && <DataEntryPage />}
-        {active === 'mm' && <MMContentPage embedded />}
-        {active === 'tj' && <TJPersonalBrandPage embedded />}
+        {active === 'client'    && <DataEntryPage />}
+        {active === 'mm'        && <MMContentPage embedded />}
+        {active === 'tj'        && <TJPersonalBrandPage embedded />}
+        {active === 'sales'     && <SalesOutreachPage embedded />}
+        {active === 'processes' && <ProcessesPage embedded />}
       </div>
     </div>
   )

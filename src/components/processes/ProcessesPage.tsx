@@ -28,7 +28,7 @@ type ProcessUpdate = {
   update_text: string;
 };
 
-export function ProcessesPage() {
+export function ProcessesPage({ embedded }: { embedded?: boolean } = {}) {
   const { user, isAdmin } = useAuth();
   const [activeTab, setActiveTab] = useState<'active' | 'completed'>('active');
   const [processes, setProcesses] = useState<Process[]>([]);
