@@ -319,25 +319,42 @@ export function DashboardPage() {
             const prev = prevBuilt?.[m.id as keyof typeof prevBuilt] ?? null
             const target = clientTargets.find(t => t.metric_id === m.id)?.target_value ?? null
             
+            let achNum: number | null = null
             let ach = '—'
             if (target && current !== null && !isNaN(Number(current))) {
-              ach = Math.round((Number(current) / Number(target)) * 100) + '%'
+              achNum = Math.round((Number(current) / Number(target)) * 100)
+              ach = achNum + '%'
             }
+
+            // Color coding based on achievement % (same logic as Monthly Targets)
+            const achColor = achNum === null
+              ? ''
+              : achNum >= 100 ? 'text-blue-600'
+              : achNum >= 75  ? 'text-green-600'
+              : achNum >= 50  ? 'text-amber-600'
+              : 'text-red-600'
+
+            const achBg = achNum === null
+              ? ''
+              : achNum >= 100 ? 'bg-blue-50'
+              : achNum >= 75  ? 'bg-green-50'
+              : achNum >= 50  ? 'bg-amber-50'
+              : 'bg-red-50'
 
             return (
               <TableRow key={m.id} className="h-8">
                 <TableCell className="py-1 text-xs font-medium">{m.name}</TableCell>
                 {m.type === 'textarea' ? (
-                  <TableCell 
+                  <TableCell
                     colSpan={5}
-                    className="py-1 text-left" 
+                    className="py-1 text-left"
                     style={{ fontSize: '12px', color: '#666', fontStyle: 'italic' }}
                   >
                     {current ? `"${String(current).slice(0, 100)}${String(current).length > 100 ? '...' : ''}"` : '—'}
                   </TableCell>
                 ) : (
                   <>
-                    <TableCell className="py-1 text-center text-xs font-bold">
+                    <TableCell className={cn("py-1 text-center text-xs font-bold rounded", achColor)}>
                       {['L12', 'L14', 'L17'].includes(m.id) ? formatPct(current as number) : formatDashboardValue(current, m.id)}
                     </TableCell>
                     <TableCell className="py-1 text-center text-xs text-muted-foreground">
@@ -347,7 +364,7 @@ export function DashboardPage() {
                         {fmtDelta(current as any, prev as any).text}
                     </TableCell>
                     <TableCell className="py-1 text-center text-xs text-muted-foreground">{formatMetricValue(target, m.id)}</TableCell>
-                    <TableCell className="py-1 text-center text-xs font-black">{ach}</TableCell>
+                    <TableCell className={cn("py-1 text-center text-xs font-black rounded", achColor, achBg)}>{ach}</TableCell>
                   </>
                 )}
               </TableRow>
