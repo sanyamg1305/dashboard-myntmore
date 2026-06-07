@@ -43,12 +43,6 @@ function ErrorComponent({ error }: { error: Error }) {
       <div className="max-w-md text-center">
         <h1 className="text-xl font-semibold">Something went wrong</h1>
         <p className="mt-2 text-sm text-muted-foreground">{error.message}</p>
-        <button
-          onClick={() => window.location.reload()}
-          style={{ marginTop: '1rem', padding: '0.5rem 1.5rem', background: '#FFC947', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}
-        >
-          Reload
-        </button>
       </div>
     </div>
   );
