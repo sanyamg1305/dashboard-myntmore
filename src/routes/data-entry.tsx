@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { DataEntryPage } from '../components/data-entry/DataEntryPage'
+import { DataEntryHub } from '../components/data-entry/DataEntryHub'
 
 export const Route = createFileRoute('/data-entry')({
-  component: DataEntryPage,
+  component: DataEntryHub,
 })

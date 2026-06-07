@@ -30,7 +30,7 @@ import { getCurrentWeekStart, getWeekOptions } from "@/utils/weekUtils"
 import { useAutoSave } from "@/hooks/useAutoSave"
 import { SaveIndicator } from "@/components/ui/SaveIndicator"
 
-export function TJPersonalBrandPage() {
+export function TJPersonalBrandPage({ embedded }: { embedded?: boolean } = {}) {
   const { user } = useAuth()
   const [activeTab, setActiveTab] = useState('instagram')
   const [loading, setLoading] = useState(true)
@@ -207,7 +207,7 @@ export function TJPersonalBrandPage() {
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
-        <BackButton to="/dashboard" label="Back to Dashboard" />
+        {!embedded && <BackButton to="/dashboard" label="Back to Dashboard" />}
         <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-tight text-muted-foreground bg-muted/30 px-3 py-1.5 rounded-full">
             <Instagram className="w-3 h-3 text-gold" />
             <span>TJ Personal Brand</span>

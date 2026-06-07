@@ -6,11 +6,9 @@ import {
   PenSquare,
   CheckSquare,
   TrendingUp,
-  Star,
   Wallet,
   Settings,
   LogOut,
-  Globe,
   CalendarCheck,
 } from "lucide-react";
 import {
@@ -36,8 +34,6 @@ const items = [
   { to: "/processes", label: "Processes", icon: Settings, adminOnly: false },
   { to: "/monthly-targets", label: "Monthly Targets", icon: CalendarCheck, adminOnly: false },
   { to: "/sales", label: "Sales & Outreach", icon: TrendingUp, adminOnly: false },
-  { to: "/tj-personal-brand", label: "TJ Personal Brand", icon: Star, adminOnly: false },
-  { to: "/mm-content", label: "MM Content", icon: Globe, adminOnly: false },
   { to: "/finance", label: "Finance", icon: Wallet, adminOnly: false },
   { to: "/settings", label: "Settings", icon: Settings, adminOnly: true },
 ];

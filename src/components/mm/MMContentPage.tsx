@@ -30,7 +30,7 @@ import { getCurrentWeekStart, getWeekOptions } from "@/utils/weekUtils"
 import { useAutoSave } from "@/hooks/useAutoSave"
 import { SaveIndicator } from "@/components/ui/SaveIndicator"
 
-export function MMContentPage() {
+export function MMContentPage({ embedded }: { embedded?: boolean } = {}) {
   const { user } = useAuth()
   const [activeTab, setActiveTab] = useState('linkedin')
   const [loading, setLoading] = useState(true)
@@ -155,7 +155,7 @@ export function MMContentPage() {
   return (
     <div className="p-6 max-w-7xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
-        <BackButton to="/dashboard" label="Back to Dashboard" />
+        {!embedded && <BackButton to="/dashboard" label="Back to Dashboard" />}
         <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-tight text-muted-foreground bg-muted/30 px-3 py-1.5 rounded-full">
             <Globe className="w-3 h-3 text-gold" />
             <span>MM Company Content</span>
