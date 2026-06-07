@@ -962,28 +962,41 @@ export function DashboardPage() {
               {/* Section 2 — Active Alerts Panel */}
               {alerts.length > 0 && (
                 <Card className="border-2 border-red-100 shadow-sm overflow-hidden bg-red-50/20">
-                    <CardHeader className="bg-red-50 py-2 border-b border-red-100 flex-row items-center justify-between">
+                    <CardHeader
+                      className="bg-red-50 py-2 border-b border-red-100 flex-row items-center justify-between cursor-pointer select-none"
+                      onClick={() => {
+                        const next = new Set(collapsedSections)
+                        next.has('alerts') ? next.delete('alerts') : next.add('alerts')
+                        setCollapsedSections(next)
+                      }}
+                    >
                         <CardTitle className="text-[10px] font-black text-red-900 flex items-center gap-2 uppercase tracking-widest">
                             <AlertCircle className="w-3 h-3" /> ACTIVE ALERTS ({alerts.length})
                         </CardTitle>
+                        {collapsedSections.has('alerts')
+                          ? <ChevronDown className="w-4 h-4 text-red-700" />
+                          : <ChevronUp className="w-4 h-4 text-red-700" />
+                        }
                     </CardHeader>
-                    <CardContent className="p-0 divide-y divide-red-50">
-                        {alerts.map(alert => (
-                            <div key={alert.id} className="flex items-center justify-between p-3 hover:bg-red-50/50 transition-colors">
-                                <div className="flex items-center gap-3">
-                                    <div className={cn(
-                                        "w-2 h-2 rounded-full shrink-0",
-                                        alert.severity === 'high' ? "bg-red-500 animate-pulse" : "bg-amber-500"
-                                    )} />
-                                    <p className="text-xs font-bold text-red-950">
-                                        <span className="opacity-60 mr-2">{alert.clients?.name} —</span>
-                                        {alert.alert_message}
-                                    </p>
-                                </div>
-                                <Button size="sm" variant="ghost" onClick={() => handleResolveAlert(alert.id)} className="h-7 text-[10px] text-red-900 font-bold hover:bg-red-100 px-2">Resolve ✓</Button>
-                            </div>
-                        ))}
-                    </CardContent>
+                    {!collapsedSections.has('alerts') && (
+                      <CardContent className="p-0 divide-y divide-red-50">
+                          {alerts.map(alert => (
+                              <div key={alert.id} className="flex items-center justify-between p-3 hover:bg-red-50/50 transition-colors">
+                                  <div className="flex items-center gap-3">
+                                      <div className={cn(
+                                          "w-2 h-2 rounded-full shrink-0",
+                                          alert.severity === 'high' ? "bg-red-500 animate-pulse" : "bg-amber-500"
+                                      )} />
+                                      <p className="text-xs font-bold text-red-950">
+                                          <span className="opacity-60 mr-2">{alert.clients?.name} —</span>
+                                          {alert.alert_message}
+                                      </p>
+                                  </div>
+                                  <Button size="sm" variant="ghost" onClick={(e) => { e.stopPropagation(); handleResolveAlert(alert.id) }} className="h-7 text-[10px] text-red-900 font-bold hover:bg-red-100 px-2">Resolve ✓</Button>
+                              </div>
+                          ))}
+                      </CardContent>
+                    )}
                 </Card>
               )}
 
