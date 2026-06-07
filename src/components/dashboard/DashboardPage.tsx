@@ -140,7 +140,6 @@ export function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [isMonthlyView, setIsMonthlyView] = useState(false)
   const [weeklyBreakdownClients, setWeeklyBreakdownClients] = useState<Set<string>>(new Set())
-  const [showEmptyRows, setShowEmptyRows] = useState(false)
   const [notifications, setNotifications] = useState<AppNotification[]>([])
 
   const handleDismissNotification = (id: string) => {
@@ -286,34 +285,19 @@ export function DashboardPage() {
     </div>
   )
 
-  const MetricTable = ({
-    metrics,
-    currentData,
-    prevData,
+  const MetricTable = ({ 
+    metrics, 
+    currentData, 
+    prevData, 
     category,
-    clientTargets
-  }: {
-    metrics: any[],
-    currentData: any,
-    prevData: any,
+    clientTargets 
+  }: { 
+    metrics: any[], 
+    currentData: any, 
+    prevData: any, 
     category: 'content_metrics' | 'leadgen_metrics',
     clientTargets: any[]
-  }) => {
-    const currentBuilt = buildWeekMetrics(currentData)
-    const prevBuilt = buildWeekMetrics(prevData)
-
-    const rows = metrics.map(m => {
-      const current = currentBuilt?.[m.id as keyof typeof currentBuilt] ?? null
-      const prev = prevBuilt?.[m.id as keyof typeof prevBuilt] ?? null
-      const target = clientTargets.find(t => t.metric_id === m.id)?.target_value ?? null
-      const hasData = current !== null && current !== '' && current !== false
-      return { m, current, prev, target, hasData }
-    })
-
-    const visibleRows = showEmptyRows ? rows : rows.filter(r => r.hasData || r.m.type === 'textarea')
-    const hiddenCount = rows.length - visibleRows.length
-
-    return (
+  }) => (
     <div className="overflow-x-auto">
       <Table>
         <TableHeader className="bg-muted/30">
@@ -323,11 +307,18 @@ export function DashboardPage() {
             <TableHead className="text-[10px] font-black uppercase text-center">Prev Week</TableHead>
             <TableHead className="text-[10px] font-black uppercase text-center">Delta</TableHead>
             <TableHead className="text-[10px] font-black uppercase text-center">Target</TableHead>
-            <TableHead className="text-[10px] font-black uppercase text-center min-w-[90px]">Ach%</TableHead>
+            <TableHead className="text-[10px] font-black uppercase text-center">Ach%</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {visibleRows.map(({ m, current, prev, target }) => {
+          {metrics.map(m => {
+            const currentBuilt = buildWeekMetrics(currentData)
+            const prevBuilt = buildWeekMetrics(prevData)
+            
+            const current = currentBuilt?.[m.id as keyof typeof currentBuilt] ?? null
+            const prev = prevBuilt?.[m.id as keyof typeof prevBuilt] ?? null
+            const target = clientTargets.find(t => t.metric_id === m.id)?.target_value ?? null
+            
             let achNum: number | null = null
             let ach = '—'
             if (target && current !== null && !isNaN(Number(current))) {
@@ -335,17 +326,20 @@ export function DashboardPage() {
               ach = achNum + '%'
             }
 
-            const achColor = achNum === null ? ''
+            // Color coding based on achievement % (same logic as Monthly Targets)
+            const achColor = achNum === null
+              ? ''
               : achNum >= 100 ? 'text-blue-600'
               : achNum >= 75  ? 'text-green-600'
               : achNum >= 50  ? 'text-amber-600'
               : 'text-red-600'
 
-            const achBarColor = achNum === null ? 'bg-muted'
-              : achNum >= 100 ? 'bg-blue-500'
-              : achNum >= 75  ? 'bg-green-500'
-              : achNum >= 50  ? 'bg-amber-400'
-              : 'bg-red-500'
+            const achBg = achNum === null
+              ? ''
+              : achNum >= 100 ? 'bg-blue-50'
+              : achNum >= 75  ? 'bg-green-50'
+              : achNum >= 50  ? 'bg-amber-50'
+              : 'bg-red-50'
 
             return (
               <TableRow key={m.id} className="h-8">
@@ -370,18 +364,7 @@ export function DashboardPage() {
                         {fmtDelta(current as any, prev as any).text}
                     </TableCell>
                     <TableCell className="py-1 text-center text-xs text-muted-foreground">{formatMetricValue(target, m.id)}</TableCell>
-                    <TableCell className="py-1 px-3">
-                      {achNum === null ? (
-                        <span className="text-muted-foreground/40 text-xs flex justify-center">—</span>
-                      ) : (
-                        <div className="flex flex-col items-center gap-0.5 w-full">
-                          <div className="w-full h-1.5 bg-muted/50 rounded-full overflow-hidden">
-                            <div className={cn("h-full rounded-full transition-all", achBarColor)} style={{ width: `${Math.min(achNum, 100)}%` }} />
-                          </div>
-                          <span className={cn("text-[10px] font-black tabular-nums", achColor)}>{ach}</span>
-                        </div>
-                      )}
-                    </TableCell>
+                    <TableCell className={cn("py-1 text-center text-xs font-black rounded", achColor, achBg)}>{ach}</TableCell>
                   </>
                 )}
               </TableRow>
@@ -389,17 +372,8 @@ export function DashboardPage() {
           })}
         </TableBody>
       </Table>
-      {!showEmptyRows && hiddenCount > 0 && (
-        <button
-          onClick={() => setShowEmptyRows(true)}
-          className="w-full py-1.5 text-[10px] text-muted-foreground hover:text-foreground font-semibold border-t border-dashed hover:bg-muted/20 transition-colors"
-        >
-          + Show {hiddenCount} empty row{hiddenCount > 1 ? 's' : ''}
-        </button>
-      )}
     </div>
-    )
-  }
+  )
 
   const WeeklyBreakdown = ({ client, weeks }: { client: any, weeks: any[] }) => {
     // Calculate Monthly Totals
@@ -1154,60 +1128,6 @@ export function DashboardPage() {
                                   </div>
                                 ) : (
                                   <>
-                                    {/* ── Top Issues Banner ── */}
-                                    {(() => {
-                                      const built = (buildWeekMetrics(currentData) ?? {}) as Record<string, any>
-                                      const issues = ALL_METRICS
-                                        .filter(m => m.type !== 'textarea' && m.type !== 'boolean' && m.type !== 'slider' && m.hasTarget)
-                                        .map(m => {
-                                          const tgt = clientTargets.find(t => t.metric_id === m.id)?.target_value
-                                          if (!tgt) return null
-                                          const val = built[m.id]
-                                          const num = val !== null && val !== undefined ? Number(val) : null
-                                          const achPct = num !== null && num > 0 ? Math.round((num / Number(tgt)) * 100) : 0
-                                          if (achPct >= 75) return null
-                                          return { id: m.id, name: m.name, current: num, target: Number(tgt), achPct }
-                                        })
-                                        .filter(Boolean)
-                                        .sort((a, b) => a!.achPct - b!.achPct)
-                                        .slice(0, 3) as { id: string; name: string; current: number | null; target: number; achPct: number }[]
-
-                                      if (issues.length === 0) return (
-                                        <div className="mb-5 flex items-center gap-2 text-xs font-semibold text-green-700 bg-green-50 border border-green-200 rounded-lg px-4 py-2.5">
-                                          <CheckCircle2 className="w-4 h-4 shrink-0" /> All tracked metrics are on target this week 🎉
-                                        </div>
-                                      )
-                                      return (
-                                        <div className="mb-5 rounded-lg border border-red-200 bg-red-50/60 p-4">
-                                          <div className="text-[10px] font-black uppercase tracking-widest text-red-700 mb-3 flex items-center gap-2">
-                                            <AlertTriangle className="w-3 h-3" /> Needs Attention · Top {issues.length} issue{issues.length > 1 ? 's' : ''} this week
-                                          </div>
-                                          <div className="flex flex-wrap gap-2">
-                                            {issues.map(issue => (
-                                              <div key={issue.id} className="flex items-center gap-3 bg-white border border-red-200 rounded-lg px-3 py-2 shadow-sm">
-                                                <div className="text-xs font-bold text-red-950">{issue.name}</div>
-                                                <div className="text-[11px] text-muted-foreground tabular-nums">{issue.current ?? 0} / {issue.target}</div>
-                                                <div className={cn(
-                                                  "text-[11px] font-black tabular-nums px-1.5 py-0.5 rounded",
-                                                  issue.achPct < 50 ? 'bg-red-100 text-red-700' : 'bg-amber-100 text-amber-700'
-                                                )}>{issue.achPct}%</div>
-                                              </div>
-                                            ))}
-                                          </div>
-                                        </div>
-                                      )
-                                    })()}
-
-                                    {/* ── Show/Hide empty rows toggle ── */}
-                                    <div className="flex justify-end mb-3">
-                                      <button
-                                        onClick={() => setShowEmptyRows(v => !v)}
-                                        className="text-[10px] font-semibold text-muted-foreground hover:text-foreground border border-dashed rounded px-2.5 py-1 hover:bg-muted/30 transition-colors"
-                                      >
-                                        {showEmptyRows ? '🙈 Hide empty rows' : '👁 Show all rows'}
-                                      </button>
-                                    </div>
-
                                     {weeklyBreakdownClients.has(client.id) && (
                                   <div className="mb-8 border-b pb-8">
                                     <h4 className="text-xs font-black uppercase tracking-widest mb-4 flex items-center gap-2">
