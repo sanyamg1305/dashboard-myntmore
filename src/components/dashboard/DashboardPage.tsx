@@ -177,6 +177,9 @@ export function DashboardPage() {
       if (client.birthday) {
         const daysUntil = getDaysUntilNextOccurrence(client.birthday, today)
         if (daysUntil >= 0 && daysUntil <= 21) {
+          const bdayDate = new Date(client.birthday)
+          const bdayThisYear = new Date(today.getFullYear(), bdayDate.getMonth(), bdayDate.getDate())
+          const bdayLabel = bdayThisYear.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })
           upcoming.push({
             id: client.id + '_bday',
             clientId: client.id,
@@ -186,7 +189,7 @@ export function DashboardPage() {
             severity: daysUntil <= 3 ? 'high' : daysUntil <= 7 ? 'medium' : 'low',
             message: daysUntil === 0
               ? `🎂 Today is ${client.name}'s birthday! Don't forget to wish them.`
-              : `🎂 ${client.name}'s birthday is in ${daysUntil} day${daysUntil > 1 ? 's' : ''}`
+              : `🎂 ${client.name}'s birthday is in ${daysUntil} day${daysUntil > 1 ? 's' : ''} · ${bdayLabel}`
           })
         }
       }
@@ -200,6 +203,8 @@ export function DashboardPage() {
             && new Date(today.getFullYear(), start.getMonth(), start.getDate()) > today ? 1 : 0)
   
         if (daysUntil >= 0 && daysUntil <= 21 && years > 0) {
+          const annexThisYear = new Date(today.getFullYear(), start.getMonth(), start.getDate())
+          const annexLabel = annexThisYear.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })
           upcoming.push({
             id: client.id + '_anniv',
             clientId: client.id,
@@ -209,7 +214,7 @@ export function DashboardPage() {
             severity: daysUntil <= 3 ? 'high' : daysUntil <= 7 ? 'medium' : 'low',
             message: daysUntil === 0
               ? `🎉 Today is ${client.name}'s ${years}-year anniversary with Myntmore!`
-              : `🎉 ${client.name}'s ${years}-year Myntmore anniversary is in ${daysUntil} day${daysUntil > 1 ? 's' : ''}`
+              : `🎉 ${client.name}'s ${years}-year Myntmore anniversary is in ${daysUntil} day${daysUntil > 1 ? 's' : ''} · ${annexLabel}`
           })
         }
       }
