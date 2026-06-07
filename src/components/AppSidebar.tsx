@@ -10,6 +10,7 @@ import {
   Settings,
   LogOut,
   CalendarCheck,
+  BarChart2,
 } from "lucide-react";
 import {
   Sidebar,
@@ -33,6 +34,7 @@ const items = [
   { to: "/actionables", label: "Actionables", icon: CheckSquare, adminOnly: false },
   { to: "/processes", label: "Processes", icon: Settings, adminOnly: false },
   { to: "/monthly-targets", label: "Monthly Targets", icon: CalendarCheck, adminOnly: false },
+  { to: "/reports", label: "Reports", icon: BarChart2, adminOnly: false },
   { to: "/sales", label: "Sales & Outreach", icon: TrendingUp, adminOnly: false },
   { to: "/finance", label: "Finance", icon: Wallet, adminOnly: false },
   { to: "/settings", label: "Settings", icon: Settings, adminOnly: true },
