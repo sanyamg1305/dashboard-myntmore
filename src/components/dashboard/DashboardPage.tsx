@@ -26,7 +26,7 @@ import { buildWeekMetrics, formatMetricDisplay, formatPct } from "@/utils/metric
 import type {
   WeeklyData, WeeklyDataSummary, Profile, MetricTarget, HealthScore, Actionable,
   Campaign, MyntmoreProcess, ProcessUpdate, TjWeeklyData, SalesWeeklyData,
-  MmWeeklyData, AppNotification, ClientAlertRow, ClientWithManagers,
+  MmWeeklyData, AppNotification, ClientAlertRow, ClientWithManagers, HighScore,
 } from '@/types'
 
 // Helpers replaced by @/utils/dataUtils
@@ -130,6 +130,7 @@ export function DashboardPage() {
   const [prevWeeklyData, setPrevWeeklyData] = useState<WeeklyData[]>([])
   const [monthWeeklyData, setMonthWeeklyData] = useState<WeeklyDataSummary[]>([])
   const [targets, setTargets] = useState<MetricTarget[]>([])
+  const [highScores, setHighScores] = useState<HighScore[]>([])
   const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null)
   const [actionables, setActionables] = useState<Actionable[]>([])
   const [processesData, setProcessesData] = useState<MyntmoreProcess[]>([])
@@ -290,19 +291,24 @@ export function DashboardPage() {
     </div>
   )
 
-  const MetricTable = ({ 
-    metrics, 
-    currentData, 
-    prevData, 
+  const MetricTable = ({
+    metrics,
+    currentData,
+    prevData,
     category,
-    clientTargets 
-  }: { 
-    metrics: any[], 
-    currentData: any, 
-    prevData: any, 
+    clientTargets,
+    clientHighScores
+  }: {
+    metrics: any[],
+    currentData: any,
+    prevData: any,
     category: 'content_metrics' | 'leadgen_metrics',
-    clientTargets: any[]
-  }) => (
+    clientTargets: any[],
+    clientHighScores: HighScore[]
+  }) => {
+    const currentBuilt = buildWeekMetrics(currentData)
+    const prevBuilt = buildWeekMetrics(prevData)
+    return (
     <div className="overflow-x-auto">
       <Table>
         <TableHeader className="bg-muted/30">
@@ -313,34 +319,33 @@ export function DashboardPage() {
             <TableHead className="text-[10px] font-black uppercase text-center">Delta</TableHead>
             <TableHead className="text-[10px] font-black uppercase text-center">Target</TableHead>
             <TableHead className="text-[10px] font-black uppercase text-center">Ach%</TableHead>
+            <TableHead className="text-[10px] font-black uppercase text-center text-amber-600">Best Ever</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {metrics.map(m => {
-            const currentBuilt = buildWeekMetrics(currentData)
-            const prevBuilt = buildWeekMetrics(prevData)
-            
             const current = currentBuilt?.[m.id as keyof typeof currentBuilt] ?? null
             const prev = prevBuilt?.[m.id as keyof typeof prevBuilt] ?? null
             const target = clientTargets.find(t => t.metric_id === m.id)?.target_value ?? null
-            
+            const hs = clientHighScores.find(h => h.metric_id === m.id)
+            const bestEver = hs?.lifetime_high ?? null
+            const currentNum = current !== null && !isNaN(Number(current)) ? Number(current) : null
+            const isNewHigh = currentNum !== null && currentNum > 0 && (bestEver === null || currentNum >= Number(bestEver))
+
             let achNum: number | null = null
             let ach = '—'
-            if (target && current !== null && !isNaN(Number(current))) {
-              achNum = Math.round((Number(current) / Number(target)) * 100)
+            if (target && currentNum !== null) {
+              achNum = Math.round((currentNum / Number(target)) * 100)
               ach = achNum + '%'
             }
 
-            // Color coding based on achievement % (same logic as Monthly Targets)
-            const achColor = achNum === null
-              ? ''
+            const achColor = achNum === null ? ''
               : achNum >= 100 ? 'text-blue-600'
               : achNum >= 75  ? 'text-green-600'
               : achNum >= 50  ? 'text-amber-600'
               : 'text-red-600'
 
-            const achBg = achNum === null
-              ? ''
+            const achBg = achNum === null ? ''
               : achNum >= 100 ? 'bg-blue-50'
               : achNum >= 75  ? 'bg-green-50'
               : achNum >= 50  ? 'bg-amber-50'
@@ -351,7 +356,7 @@ export function DashboardPage() {
                 <TableCell className="py-1 text-xs font-medium">{m.name}</TableCell>
                 {m.type === 'textarea' ? (
                   <TableCell
-                    colSpan={5}
+                    colSpan={6}
                     className="py-1 text-left"
                     style={{ fontSize: '12px', color: '#666', fontStyle: 'italic' }}
                   >
@@ -360,16 +365,22 @@ export function DashboardPage() {
                 ) : (
                   <>
                     <TableCell className={cn("py-1 text-center text-xs font-bold rounded", achColor)}>
-                      {['L12', 'L14', 'L17'].includes(m.id) ? formatPct(current as number) : formatDashboardValue(current, m.id)}
+                      <span className="inline-flex items-center gap-1 justify-center">
+                        {isNewHigh && <span title="New high score! 👑" className="text-amber-400 text-sm leading-none">👑</span>}
+                        {['L12', 'L14', 'L17'].includes(m.id) ? formatPct(current as number) : formatDashboardValue(current, m.id)}
+                      </span>
                     </TableCell>
                     <TableCell className="py-1 text-center text-xs text-muted-foreground">
                       {['L12', 'L14', 'L17'].includes(m.id) ? formatPct(prev as number) : formatDashboardValue(prev, m.id)}
                     </TableCell>
                     <TableCell className="py-1 text-center text-xs font-bold" style={{ color: fmtDelta(current as any, prev as any).color }}>
-                        {fmtDelta(current as any, prev as any).text}
+                      {fmtDelta(current as any, prev as any).text}
                     </TableCell>
                     <TableCell className="py-1 text-center text-xs text-muted-foreground">{formatMetricValue(target, m.id)}</TableCell>
                     <TableCell className={cn("py-1 text-center text-xs font-black rounded", achColor, achBg)}>{ach}</TableCell>
+                    <TableCell className="py-1 text-center text-xs font-bold text-amber-600">
+                      {bestEver !== null ? formatDashboardValue(bestEver, m.id) : '—'}
+                    </TableCell>
                   </>
                 )}
               </TableRow>
@@ -378,7 +389,8 @@ export function DashboardPage() {
         </TableBody>
       </Table>
     </div>
-  )
+    )
+  }
 
   const WeeklyBreakdown = ({ client, weeks }: { client: any, weeks: any[] }) => {
     // Calculate Monthly Totals
@@ -647,6 +659,7 @@ export function DashboardPage() {
         { data: profilesData },
         { data: actionablesData },
         { data: targetsData },
+        { data: highScoresData },
         { data: monthWeeksRes },
         { data: pData },
         { data: pUpdates }
@@ -665,6 +678,7 @@ export function DashboardPage() {
         supabase.from('profiles').select('*'),
         supabase.from('actionables').select('*').eq('status', 'todo'),
         supabase.from('targets').select('*').eq('period', weekStart).eq('target_type', 'weekly'),
+        supabase.from('high_scores').select('*'),
         supabase.from('weekly_data').select('week_start, week_label, content_metrics, leadgen_metrics, client_id, content_submitted_at, leadgen_submitted_at')
           .gte('week_start', weekStart.slice(0, 7) + '-01')
           .lte('week_start', weekStart.slice(0, 7) + '-31')
@@ -688,6 +702,7 @@ export function DashboardPage() {
       setProfiles(profilesData || [])
       setActionables(actionablesData || [])
       setTargets(targetsData || [])
+      setHighScores(highScoresData || [])
       setProcessesData(pData || [])
       setProcessesUpdates(pUpdates || [])
 
@@ -1148,12 +1163,13 @@ export function DashboardPage() {
                                       <FileText className="w-4 h-4 text-gold" />
                                       <h4 className="text-xs font-black uppercase tracking-widest">Content Metrics</h4>
                                     </div>
-                                    <MetricTable 
+                                    <MetricTable
                                       metrics={CONTENT_METRICS.filter(m => m.group !== 'Qualitative')}
                                       currentData={currentData}
                                       prevData={prevData}
                                       category="content_metrics"
                                       clientTargets={clientTargets}
+                                      clientHighScores={highScores.filter(h => h.client_id === client.id)}
                                     />
                                   </div>
 
@@ -1163,12 +1179,13 @@ export function DashboardPage() {
                                       <Users className="w-4 h-4 text-gold" />
                                       <h4 className="text-xs font-black uppercase tracking-widest">Lead Gen Metrics</h4>
                                     </div>
-                                    <MetricTable 
+                                    <MetricTable
                                       metrics={LEADGEN_METRICS.filter(m => m.group !== 'Qualitative')}
                                       currentData={currentData}
                                       prevData={prevData}
                                       category="leadgen_metrics"
                                       clientTargets={clientTargets}
+                                      clientHighScores={highScores.filter(h => h.client_id === client.id)}
                                     />
                                   </div>
                                 </div>
