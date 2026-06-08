@@ -106,8 +106,42 @@ export function SettingsTargetsPage() {
   const [clients, setClients] = useState<any[]>([])
 
   const period = targetType === 'weekly' ? selectedWeekStart : selectedMonth
-  const weekOptions = useMemo(() => getWeekOptions(12), [])
   const monthOptions = useMemo(() => getMonthOptions(6), [])
+
+  const weekOptions = useMemo(() => {
+    // All weeks of current month (including future) + last 8 past weeks, deduped
+    const now = new Date()
+    const year = now.getUTCFullYear()
+    const month = now.getUTCMonth()
+    const firstDay = new Date(Date.UTC(year, month, 1))
+    const lastDay = new Date(Date.UTC(year, month + 1, 0))
+
+    // Snap to the Monday on or before the 1st
+    const cursor = new Date(firstDay)
+    const dow = cursor.getUTCDay()
+    cursor.setUTCDate(cursor.getUTCDate() - (dow === 0 ? 6 : dow - 1))
+
+    const currentMonthWeeks: string[] = []
+    while (cursor <= lastDay) {
+      currentMonthWeeks.push(cursor.toISOString().split('T')[0])
+      cursor.setUTCDate(cursor.getUTCDate() + 7)
+    }
+
+    // Past weeks (12 back) to fill the dropdown
+    const pastWeeks = getWeekOptions(12).map(w => w.weekStart)
+
+    // Merge: current month first (newest first), then past weeks not already listed
+    const allWeekStarts = [
+      ...currentMonthWeeks.slice().reverse(),
+      ...pastWeeks.filter(w => !currentMonthWeeks.includes(w))
+    ]
+
+    return allWeekStarts.map(weekStart => ({
+      weekStart,
+      weekEnd: getWeekEnd(weekStart),
+      label: getWeekLabel(weekStart),
+    }))
+  }, [])
 
   useEffect(() => {
     const fetchClients = async () => {
