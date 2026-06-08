@@ -57,7 +57,6 @@ export const LEADGEN_METRICS: Metric[] = [
   // Connection Request Outreach
   { id: 'L07', name: 'ICP Targeted', type: 'textarea', category: 'leadgen', group: 'Connection Request Outreach', hasTarget: false, hasNote: false },
   { id: 'L08', name: 'Message Narrative / Strategy', type: 'textarea', category: 'leadgen', group: 'Connection Request Outreach', hasTarget: false, hasNote: false },
-  { id: 'L09', name: 'Target Set by Outreach Owner', type: 'number', category: 'leadgen', group: 'Connection Request Outreach', hasTarget: false, hasNote: false },
   { id: 'L10', name: 'Connection Requests Sent', type: 'number', category: 'leadgen', group: 'Connection Request Outreach', hasTarget: true, hasNote: false },
   { id: 'L11', name: 'Accepted Invitations', type: 'number', category: 'leadgen', group: 'Connection Request Outreach', hasTarget: false, hasNote: false },
   { id: 'L12', name: 'Acceptance Rate', type: 'auto', category: 'leadgen', group: 'Connection Request Outreach', autoFormula: 'L11/L10*100', dependsOn: ['L11','L10'], hasTarget: true, hasNote: false, unit: '%' },
