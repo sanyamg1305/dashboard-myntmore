@@ -378,7 +378,10 @@ export function DashboardPage() {
                     </TableCell>
                     <TableCell className="py-1 text-center text-xs text-muted-foreground">{formatMetricValue(target, m.id)}</TableCell>
                     <TableCell className={cn("py-1 text-center text-xs font-black rounded", achColor, achBg)}>{ach}</TableCell>
-                    <TableCell className="py-1 text-center text-xs font-bold text-amber-600">
+                    <TableCell
+                      className="py-1 text-center text-xs font-bold text-amber-600 cursor-help"
+                      title={hs?.achieved_week ? `Achieved: w/c ${new Date(hs.achieved_week).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}` : undefined}
+                    >
                       {bestEver !== null ? formatDashboardValue(bestEver, m.id) : '—'}
                     </TableCell>
                   </>
