@@ -23,6 +23,7 @@ import { fmt as gFmt, fmtDelta, Delta, fmtPct, fmtPctDelta } from "@/utils/forma
 import { calcRateCapped } from "@/utils/readMetric"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { buildWeekMetrics, formatMetricDisplay, formatPct } from "@/utils/metricCalculations"
+import { backfillHighScores } from "@/utils/highScores"
 import type {
   WeeklyData, WeeklyDataSummary, Profile, MetricTarget, HealthScore, Actionable,
   Campaign, MyntmoreProcess, ProcessUpdate, TjWeeklyData, SalesWeeklyData,
@@ -330,7 +331,7 @@ export function DashboardPage() {
             const hs = clientHighScores.find(h => h.metric_id === m.id)
             const bestEver = hs?.lifetime_high ?? null
             const currentNum = current !== null && !isNaN(Number(current)) ? Number(current) : null
-            const isNewHigh = currentNum !== null && currentNum > 0 && (bestEver === null || currentNum >= Number(bestEver))
+            const isNewHigh = currentNum !== null && currentNum > 0 && bestEver !== null && currentNum > Number(bestEver)
 
             let achNum: number | null = null
             let ach = '—'
@@ -708,6 +709,15 @@ export function DashboardPage() {
       setHighScores(highScoresData || [])
       setProcessesData(pData || [])
       setProcessesUpdates(pUpdates || [])
+
+      // Backfill high scores for all clients — scans full history and self-heals stale/missing records
+      Promise.all(
+        (clientsData || []).map((c: any) => backfillHighScores(c.id))
+      ).then(async () => {
+        // Re-fetch high scores after backfill so UI reflects corrected values
+        const { data: refreshed } = await supabase.from('high_scores').select('*')
+        if (refreshed) setHighScores(refreshed)
+      })
 
       // Check and fetch notifications
       await checkNotifications()

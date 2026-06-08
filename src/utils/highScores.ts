@@ -2,6 +2,81 @@ import { supabase } from '@/integrations/supabase/client'
 import { calcAcceptanceRate, calcResponseRate, calcPositiveRate } from './metricCalculations'
 import { readNum } from './readMetric'
 
+/**
+ * Scans ALL historical weekly_data rows for a client and upserts true all-time highs.
+ * Call this from the dashboard on load to self-heal any missing/stale high score records.
+ */
+export async function backfillHighScores(clientId: string): Promise<void> {
+  // Fetch every weekly row for this client
+  const { data: rows, error } = await supabase
+    .from('weekly_data')
+    .select('week_start, content_metrics, leadgen_metrics')
+    .eq('client_id', clientId)
+
+  if (error || !rows || rows.length === 0) return
+
+  // Track best value and which week it was achieved
+  const best: Record<string, { value: number; week: string; name: string }> = {}
+
+  for (const row of rows) {
+    const cm = row.content_metrics as Record<string, any> ?? {}
+    const lm = row.leadgen_metrics as Record<string, any> ?? {}
+    const weekStart = row.week_start
+
+    TRACKED_METRICS.forEach(({ id, name, category }) => {
+      const col = category === 'content' ? cm : lm
+      const val = readNum(col, id)
+      if (val !== null && val > 0) {
+        if (!best[id] || val > best[id].value) {
+          best[id] = { value: val, week: weekStart, name }
+        }
+      }
+    })
+
+    // Computed rates
+    const L10 = readNum(lm, 'L10'), L11 = readNum(lm, 'L11')
+    const L13 = readNum(lm, 'L13'), L15 = readNum(lm, 'L15')
+    const accRate = calcAcceptanceRate(L10, L11)
+    const respRate = calcResponseRate(L11, L13)
+    const posRate = calcPositiveRate(L13, L15)
+    if (accRate && accRate > 0 && (!best['L12'] || accRate > best['L12'].value))
+      best['L12'] = { value: accRate, week: weekStart, name: 'Acceptance Rate' }
+    if (respRate && respRate > 0 && (!best['L14'] || respRate > best['L14'].value))
+      best['L14'] = { value: respRate, week: weekStart, name: 'Response Rate' }
+    if (posRate && posRate > 0 && (!best['L17'] || posRate > best['L17'].value))
+      best['L17'] = { value: posRate, week: weekStart, name: 'Positive Response Rate' }
+  }
+
+  if (Object.keys(best).length === 0) return
+
+  // Fetch existing stored highs to avoid unnecessary writes
+  const { data: existing } = await supabase
+    .from('high_scores')
+    .select('metric_id, lifetime_high')
+    .eq('client_id', clientId)
+
+  const existingMap: Record<string, number | null> = {}
+  existing?.forEach(s => { existingMap[s.metric_id] = s.lifetime_high })
+
+  // Only upsert rows where the computed best differs from what's stored
+  const upsertRows = Object.entries(best)
+    .filter(([id, { value }]) => existingMap[id] === undefined || (existingMap[id] ?? 0) < value)
+    .map(([id, { value, week, name }]) => ({
+      client_id: clientId,
+      metric_id: id,
+      metric_name: name,
+      lifetime_high: value,
+      achieved_week: week,
+      previous_high: existingMap[id] ?? null,
+      updated_at: new Date().toISOString(),
+    }))
+
+  if (upsertRows.length > 0) {
+    await supabase.from('high_scores').upsert(upsertRows, { onConflict: 'client_id,metric_id' })
+    console.log(`✅ Backfilled ${upsertRows.length} high score(s) for client ${clientId}`)
+  }
+}
+
 const TRACKED_METRICS = [
   { id: 'C03', name: 'Posts Drafted', category: 'content' },
   { id: 'C09', name: 'Total Posts Posted', category: 'content' },
