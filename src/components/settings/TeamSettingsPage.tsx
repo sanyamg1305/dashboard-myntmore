@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
-import { UserPlus, Copy, Check, RefreshCw, Ban, Shield, Trash2, KeyRound } from "lucide-react"
+import { UserPlus, Copy, Check, RefreshCw, Ban, Shield, Trash2, KeyRound, Globe, Link2, Unlink } from "lucide-react"
 
 export function TeamSettingsPage() {
   const { user: currentUser } = useAuth()
@@ -34,6 +34,74 @@ export function TeamSettingsPage() {
     fullName: '',
     email: ''
   })
+
+  // Client Portal state
+  const [clients, setClients] = useState<any[]>([])
+  const [isPortalModalOpen, setIsPortalModalOpen] = useState(false)
+  const [portalForm, setPortalForm] = useState({ email: '', password: '', clientId: '' })
+  const [portalLoading, setPortalLoading] = useState(false)
+
+  const fetchClients = async () => {
+    const { data } = await supabase.from('clients').select('id, name, company, user_id').eq('status', 'active').order('name')
+    setClients(data || [])
+  }
+
+  const handleCreatePortalUser = async () => {
+    if (!portalForm.email || !portalForm.password || !portalForm.clientId) {
+      toast.error('Email, password and client are required.')
+      return
+    }
+    if (portalForm.password.length < 8) {
+      toast.error('Password must be at least 8 characters.')
+      return
+    }
+    if (!supabaseAdmin) {
+      toast.error('Service role key not configured. Cannot create portal users.')
+      return
+    }
+    setPortalLoading(true)
+    try {
+      // 1. Create auth user
+      const { data: authData, error: authErr } = await supabaseAdmin.auth.admin.createUser({
+        email: portalForm.email,
+        password: portalForm.password,
+        email_confirm: true,
+      })
+      if (authErr) throw authErr
+      const newUserId = authData.user.id
+
+      // 2. Create profile
+      await supabase.from('profiles').upsert({
+        id: newUserId,
+        email: portalForm.email,
+        full_name: clients.find(c => c.id === portalForm.clientId)?.name || 'Client',
+        invite_status: 'active',
+      })
+
+      // 3. Set role = member (lowest access; portal access is determined by clients.user_id)
+      await supabase.from('user_roles').insert({ user_id: newUserId, role: 'member' })
+
+      // 4. Link user to client
+      await supabase.from('clients').update({ user_id: newUserId } as any).eq('id', portalForm.clientId)
+
+      toast.success('Portal account created and linked!')
+      setIsPortalModalOpen(false)
+      setPortalForm({ email: '', password: '', clientId: '' })
+      fetchClients()
+      fetchData()
+    } catch (e: any) {
+      toast.error('Failed: ' + e.message)
+    } finally {
+      setPortalLoading(false)
+    }
+  }
+
+  const handleUnlinkPortalUser = async (clientId: string) => {
+    if (!confirm('Remove portal access for this client?')) return
+    await supabase.from('clients').update({ user_id: null } as any).eq('id', clientId)
+    toast.success('Portal access removed.')
+    fetchClients()
+  }
 
   const fetchData = async () => {
     setLoading(true)
@@ -72,6 +140,7 @@ export function TeamSettingsPage() {
 
   useEffect(() => {
     fetchData()
+    fetchClients()
   }, [])
 
   const handleInvite = async () => {
@@ -514,6 +583,108 @@ export function TeamSettingsPage() {
             </Button>
             <Button onClick={handleSaveEditName} className="bg-gold text-black font-bold">
               Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* ─── Client Portal Section ─── */}
+      <div className="space-y-4 pt-4 border-t">
+        <div className="flex justify-between items-center">
+          <div>
+            <h2 className="text-xl font-bold flex items-center gap-2"><Globe className="w-5 h-5 text-gold" /> Client Portal Access</h2>
+            <p className="text-sm text-muted-foreground font-medium mt-0.5">Create login credentials so clients can view their campaign data.</p>
+          </div>
+          <Button onClick={() => setIsPortalModalOpen(true)} className="bg-gold text-black hover:bg-gold/90 font-bold">
+            <UserPlus className="w-4 h-4 mr-2" /> Create Portal Account
+          </Button>
+        </div>
+
+        <div className="rounded-lg border bg-card overflow-hidden">
+          <Table>
+            <TableHeader className="bg-muted/20">
+              <TableRow>
+                <TableHead className="font-bold">Client</TableHead>
+                <TableHead className="font-bold">Company</TableHead>
+                <TableHead className="font-bold">Portal Access</TableHead>
+                <TableHead className="font-bold">Login URL</TableHead>
+                <TableHead className="font-bold text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {clients.map(c => (
+                <TableRow key={c.id}>
+                  <TableCell className="font-bold">{c.name}</TableCell>
+                  <TableCell className="text-muted-foreground">{c.company}</TableCell>
+                  <TableCell>
+                    {(c as any).user_id
+                      ? <Badge className="bg-green-100 text-green-700 border-green-200 font-bold">✓ Active</Badge>
+                      : <Badge variant="outline" className="text-muted-foreground">No access</Badge>}
+                  </TableCell>
+                  <TableCell className="text-xs text-muted-foreground">
+                    {(c as any).user_id ? `${window.location.origin}/portal` : '—'}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {(c as any).user_id && (
+                      <Button variant="ghost" size="sm" onClick={() => handleUnlinkPortalUser(c.id)}
+                        className="text-red-500 hover:text-red-700 hover:bg-red-50 gap-1.5 text-xs">
+                        <Unlink className="w-3.5 h-3.5" /> Remove
+                      </Button>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+              {clients.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-10 text-muted-foreground italic">No active clients found.</TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+
+      {/* Create Portal User Modal */}
+      <Dialog open={isPortalModalOpen} onOpenChange={setIsPortalModalOpen}>
+        <DialogContent className="sm:max-w-[420px]">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-black flex items-center gap-2">
+              <Globe className="w-5 h-5 text-gold" /> Create Client Portal Account
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label className="font-bold">Client *</Label>
+              <Select value={portalForm.clientId} onValueChange={v => setPortalForm(p => ({...p, clientId: v}))}>
+                <SelectTrigger><SelectValue placeholder="Select client to link" /></SelectTrigger>
+                <SelectContent>
+                  {clients.filter(c => !(c as any).user_id).map(c => (
+                    <SelectItem key={c.id} value={c.id}>{c.name} — {c.company}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">Only clients without existing portal access are shown.</p>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="font-bold">Login Email *</Label>
+              <Input type="email" placeholder="client@company.com" value={portalForm.email}
+                onChange={e => setPortalForm(p => ({...p, email: e.target.value}))} />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="font-bold">Password * <span className="text-muted-foreground font-normal">(min 8 chars)</span></Label>
+              <Input type="password" placeholder="Set a strong password" value={portalForm.password}
+                onChange={e => setPortalForm(p => ({...p, password: e.target.value}))} />
+            </div>
+            <div className="p-3 bg-gold/10 border border-gold/20 rounded-lg text-xs text-muted-foreground">
+              <p className="font-bold text-foreground mb-1">Share with your client:</p>
+              <p>URL: <span className="font-mono font-bold">{window.location.origin}/portal</span></p>
+              <p className="mt-0.5">They'll log in with the email and password you set above.</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsPortalModalOpen(false)}>Cancel</Button>
+            <Button onClick={handleCreatePortalUser} disabled={portalLoading} className="bg-gold text-black font-black">
+              {portalLoading ? 'Creating...' : 'Create & Link Account →'}
             </Button>
           </DialogFooter>
         </DialogContent>

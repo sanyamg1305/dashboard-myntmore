@@ -1,0 +1,435 @@
+import React, { useState, useEffect, useMemo } from 'react'
+import { useNavigate } from '@tanstack/react-router'
+import { supabase } from '@/integrations/supabase/client'
+import { useAuth } from '@/lib/auth'
+import { buildWeekMetrics, formatPct } from '@/utils/metricCalculations'
+import { CONTENT_METRICS, LEADGEN_METRICS } from '@/data/metrics'
+import { getWeekOptions, getCurrentWeekStart } from '@/utils/weekUtils'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
+import {
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
+  ResponsiveContainer, LineChart, Line
+} from 'recharts'
+import { LogOut, TrendingUp, Users, FileText, BarChart2, Loader2, ArrowUpRight, ArrowDownRight, Minus } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import myntmoreLogo from '@/assets/myntmore-logo.png'
+
+const GOLD = '#FFC947'
+
+// Metrics to highlight in the overview cards
+const OVERVIEW_METRICS = [
+  { id: 'C09', label: 'Total Posts', icon: FileText },
+  { id: 'C10', label: 'Impressions', icon: BarChart2 },
+  { id: 'L10', label: 'Connection Requests', icon: Users },
+  { id: 'L24', label: 'Meetings Booked', icon: TrendingUp },
+]
+
+// Metrics to show trend charts for
+const TREND_METRICS = [
+  { id: 'C10', label: 'Impressions', color: '#FFC947' },
+  { id: 'C09', label: 'Total Posts', color: '#60A5FA' },
+  { id: 'L10', label: 'Connection Requests Sent', color: '#34D399' },
+  { id: 'L24', label: 'Meetings Booked', color: '#F472B6' },
+]
+
+function formatVal(val: any): string {
+  if (val === null || val === undefined || val === '') return '—'
+  const n = Number(val)
+  if (isNaN(n)) return '—'
+  if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M'
+  if (n >= 1000) return (n / 1000).toFixed(1) + 'K'
+  return String(n)
+}
+
+function Delta({ curr, prev }: { curr: any; prev: any }) {
+  const c = Number(curr), p = Number(prev)
+  if (isNaN(c) || isNaN(p) || !curr || !prev) return <span className="text-muted-foreground">—</span>
+  const diff = c - p
+  if (diff === 0) return <span className="text-muted-foreground flex items-center gap-0.5"><Minus className="w-3 h-3" />0</span>
+  const pct = Math.abs(Math.round((diff / p) * 100))
+  return diff > 0
+    ? <span className="text-green-600 font-bold flex items-center gap-0.5"><ArrowUpRight className="w-3 h-3" />+{formatVal(diff)} <span className="text-xs font-normal opacity-70">({pct}%)</span></span>
+    : <span className="text-red-500 font-bold flex items-center gap-0.5"><ArrowDownRight className="w-3 h-3" />{formatVal(diff)} <span className="text-xs font-normal opacity-70">({pct}%)</span></span>
+}
+
+export function ClientPortalPage() {
+  const { user, clientRecord, isClient, loading: authLoading, signOut } = useAuth()
+  const navigate = useNavigate()
+  const weekOptions = useMemo(() => getWeekOptions(12), [])
+  const [selectedWeek, setSelectedWeek] = useState(getCurrentWeekStart())
+  const [activeTab, setActiveTab] = useState<'overview' | 'content' | 'leadgen' | 'trends'>('overview')
+  const [currentData, setCurrentData] = useState<any>(null)
+  const [prevData, setPrevData] = useState<any>(null)
+  const [historyData, setHistoryData] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  // Redirect non-clients away
+  useEffect(() => {
+    if (authLoading) return
+    if (!user) { navigate({ to: '/login' }); return }
+    if (!isClient) { navigate({ to: '/dashboard' }); return }
+  }, [authLoading, user, isClient])
+
+  useEffect(() => {
+    if (!clientRecord) return
+    fetchData()
+  }, [clientRecord, selectedWeek])
+
+  const fetchData = async () => {
+    if (!clientRecord) return
+    setLoading(true)
+    try {
+      // Current week
+      const [{ data: curr }, { data: history }] = await Promise.all([
+        supabase.from('weekly_data').select('content_metrics, leadgen_metrics, week_start')
+          .eq('client_id', clientRecord.id).eq('week_start', selectedWeek).maybeSingle(),
+        supabase.from('weekly_data').select('content_metrics, leadgen_metrics, week_start, week_label')
+          .eq('client_id', clientRecord.id).order('week_start', { ascending: false }).limit(12),
+      ])
+      setCurrentData(curr)
+
+      // Previous week
+      const selectedIdx = weekOptions.findIndex(w => w.weekStart === selectedWeek)
+      const prevWeek = weekOptions[selectedIdx + 1]?.weekStart
+      if (prevWeek) {
+        const { data: prev } = await supabase.from('weekly_data')
+          .select('content_metrics, leadgen_metrics').eq('client_id', clientRecord.id)
+          .eq('week_start', prevWeek).maybeSingle()
+        setPrevData(prev)
+      } else {
+        setPrevData(null)
+      }
+
+      setHistoryData((history || []).reverse())
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleSignOut = async () => {
+    await signOut()
+    navigate({ to: '/login' })
+  }
+
+  if (authLoading || (!clientRecord && !authLoading)) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-gold" />
+      </div>
+    )
+  }
+
+  const currentBuilt = buildWeekMetrics(currentData)
+  const prevBuilt = buildWeekMetrics(prevData)
+
+  // Chart data
+  const chartData = historyData.map(row => {
+    const built = buildWeekMetrics(row)
+    const label = row.week_label?.split(' – ')[0] || row.week_start?.slice(5) || ''
+    const entry: Record<string, any> = { week: label }
+    TREND_METRICS.forEach(m => {
+      entry[m.id] = Number(built?.[m.id as keyof typeof built] ?? 0) || 0
+    })
+    return entry
+  })
+
+  const contentMetrics = CONTENT_METRICS.filter(m => m.group !== 'Qualitative' && m.type !== 'boolean' && m.type !== 'textarea')
+  const leadgenMetrics = LEADGEN_METRICS.filter(m => m.group !== 'Qualitative' && m.type !== 'boolean' && m.type !== 'textarea')
+
+  const tabs = [
+    { id: 'overview', label: 'Overview' },
+    { id: 'content', label: 'Content' },
+    { id: 'leadgen', label: 'Lead Gen' },
+    { id: 'trends', label: 'Trends' },
+  ] as const
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <header className="bg-white border-b shadow-sm sticky top-0 z-10">
+        <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <img src={myntmoreLogo} alt="Myntmore" className="h-10 object-contain" />
+            <div className="h-6 w-px bg-border" />
+            <div>
+              <p className="text-sm font-black tracking-tight">{clientRecord?.name}</p>
+              <p className="text-[10px] text-muted-foreground uppercase tracking-widest">{clientRecord?.company}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <Badge variant="outline" className="text-xs font-bold border-gold/40 text-gold bg-gold/5">
+              Campaign Tracker
+            </Badge>
+            <Button variant="ghost" size="sm" onClick={handleSignOut} className="text-muted-foreground hover:text-foreground gap-1.5">
+              <LogOut className="w-3.5 h-3.5" />
+              Sign out
+            </Button>
+          </div>
+        </div>
+      </header>
+
+      <div className="max-w-6xl mx-auto px-6 py-8 space-y-6">
+        {/* Controls */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div>
+            <h1 className="text-2xl font-black tracking-tight">Your Campaign Performance</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">Weekly metrics for your LinkedIn campaign.</p>
+          </div>
+          <div className="min-w-[220px]">
+            <Select value={selectedWeek} onValueChange={setSelectedWeek}>
+              <SelectTrigger className="bg-white font-bold h-10 text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {weekOptions.map(w => <SelectItem key={w.weekStart} value={w.weekStart}>{w.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Tab bar */}
+        <div className="flex gap-1 border-b">
+          {tabs.map(t => (
+            <button
+              key={t.id}
+              onClick={() => setActiveTab(t.id)}
+              className={cn(
+                'px-5 py-2.5 text-sm font-bold transition-all border-b-2 -mb-px',
+                activeTab === t.id
+                  ? 'border-gold text-foreground'
+                  : 'border-transparent text-muted-foreground hover:text-foreground'
+              )}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <Loader2 className="w-8 h-8 animate-spin text-gold" />
+          </div>
+        ) : (
+          <>
+            {/* OVERVIEW TAB */}
+            {activeTab === 'overview' && (
+              <div className="space-y-6">
+                {/* KPI Cards */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {OVERVIEW_METRICS.map(m => {
+                    const curr = currentBuilt?.[m.id as keyof typeof currentBuilt] ?? null
+                    const prev = prevBuilt?.[m.id as keyof typeof prevBuilt] ?? null
+                    const Icon = m.icon
+                    return (
+                      <Card key={m.id} className="bg-white border shadow-sm">
+                        <CardContent className="p-5">
+                          <div className="flex items-center justify-between mb-2">
+                            <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">{m.label}</p>
+                            <Icon className="w-4 h-4 text-gold" />
+                          </div>
+                          <p className="text-3xl font-black text-foreground">{formatVal(curr)}</p>
+                          <div className="mt-1.5 text-xs">
+                            <Delta curr={curr} prev={prev} />
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )
+                  })}
+                </div>
+
+                {/* Quick metrics grid */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <Card className="bg-white border shadow-sm">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-black uppercase tracking-wider flex items-center gap-2">
+                        <FileText className="w-4 h-4 text-gold" /> Content Highlights
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      {[
+                        { id: 'C15', label: 'New Followers' },
+                        { id: 'C13', label: 'Engagement Total' },
+                        { id: 'C17', label: 'Engagement on Other Profiles' },
+                        { id: 'C16', label: 'Total Follower Count' },
+                      ].map(m => {
+                        const curr = currentBuilt?.[m.id as keyof typeof currentBuilt]
+                        const prev = prevBuilt?.[m.id as keyof typeof prevBuilt]
+                        return (
+                          <div key={m.id} className="flex items-center justify-between py-1.5 border-b border-dashed border-muted last:border-0">
+                            <span className="text-sm text-muted-foreground">{m.label}</span>
+                            <div className="flex items-center gap-3">
+                              <span className="text-sm font-black">{formatVal(curr)}</span>
+                              <span className="text-xs w-24 text-right"><Delta curr={curr} prev={prev} /></span>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </CardContent>
+                  </Card>
+
+                  <Card className="bg-white border shadow-sm">
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-black uppercase tracking-wider flex items-center gap-2">
+                        <Users className="w-4 h-4 text-gold" /> Lead Gen Highlights
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-3">
+                      {[
+                        { id: 'L11', label: 'Accepted Invitations' },
+                        { id: 'L12', label: 'Acceptance Rate', pct: true },
+                        { id: 'L13', label: 'Answered Messages' },
+                        { id: 'L15', label: 'Positive Replies' },
+                      ].map(m => {
+                        const curr = currentBuilt?.[m.id as keyof typeof currentBuilt]
+                        const prev = prevBuilt?.[m.id as keyof typeof prevBuilt]
+                        return (
+                          <div key={m.id} className="flex items-center justify-between py-1.5 border-b border-dashed border-muted last:border-0">
+                            <span className="text-sm text-muted-foreground">{m.label}</span>
+                            <div className="flex items-center gap-3">
+                              <span className="text-sm font-black">
+                                {(m as any).pct ? formatPct(curr as number) : formatVal(curr)}
+                              </span>
+                              <span className="text-xs w-24 text-right"><Delta curr={curr} prev={prev} /></span>
+                            </div>
+                          </div>
+                        )
+                      })}
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+            )}
+
+            {/* CONTENT TAB */}
+            {activeTab === 'content' && (
+              <Card className="bg-white border shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-sm font-black uppercase tracking-wider flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-gold" /> Content Metrics
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader className="bg-muted/20">
+                      <TableRow>
+                        <TableHead className="text-[10px] font-black uppercase pl-6">Metric</TableHead>
+                        <TableHead className="text-[10px] font-black uppercase text-right">This Week</TableHead>
+                        <TableHead className="text-[10px] font-black uppercase text-right">Prev Week</TableHead>
+                        <TableHead className="text-[10px] font-black uppercase text-right pr-6">Change</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {contentMetrics.map(m => {
+                        const curr = currentBuilt?.[m.id as keyof typeof currentBuilt] ?? null
+                        const prev = prevBuilt?.[m.id as keyof typeof prevBuilt] ?? null
+                        return (
+                          <TableRow key={m.id}>
+                            <TableCell className="text-sm font-medium pl-6">{m.name}</TableCell>
+                            <TableCell className="text-right font-black">{formatVal(curr)}</TableCell>
+                            <TableCell className="text-right text-muted-foreground text-sm">{formatVal(prev)}</TableCell>
+                            <TableCell className="text-right pr-6"><Delta curr={curr} prev={prev} /></TableCell>
+                          </TableRow>
+                        )
+                      })}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* LEAD GEN TAB */}
+            {activeTab === 'leadgen' && (
+              <Card className="bg-white border shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-sm font-black uppercase tracking-wider flex items-center gap-2">
+                    <Users className="w-4 h-4 text-gold" /> Lead Generation Metrics
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-0">
+                  <Table>
+                    <TableHeader className="bg-muted/20">
+                      <TableRow>
+                        <TableHead className="text-[10px] font-black uppercase pl-6">Metric</TableHead>
+                        <TableHead className="text-[10px] font-black uppercase text-right">This Week</TableHead>
+                        <TableHead className="text-[10px] font-black uppercase text-right">Prev Week</TableHead>
+                        <TableHead className="text-[10px] font-black uppercase text-right pr-6">Change</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {leadgenMetrics.map(m => {
+                        const curr = currentBuilt?.[m.id as keyof typeof currentBuilt] ?? null
+                        const prev = prevBuilt?.[m.id as keyof typeof prevBuilt] ?? null
+                        const isRate = ['L05','L12','L14','L17','L18','L21','L26'].includes(m.id)
+                        return (
+                          <TableRow key={m.id}>
+                            <TableCell className="text-sm font-medium pl-6">{m.name}</TableCell>
+                            <TableCell className="text-right font-black">
+                              {isRate ? formatPct(curr as number) : formatVal(curr)}
+                            </TableCell>
+                            <TableCell className="text-right text-muted-foreground text-sm">
+                              {isRate ? formatPct(prev as number) : formatVal(prev)}
+                            </TableCell>
+                            <TableCell className="text-right pr-6"><Delta curr={curr} prev={prev} /></TableCell>
+                          </TableRow>
+                        )
+                      })}
+                    </TableBody>
+                  </Table>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* TRENDS TAB */}
+            {activeTab === 'trends' && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {TREND_METRICS.map(m => (
+                  <Card key={m.id} className="bg-white border shadow-sm">
+                    <CardHeader>
+                      <CardTitle className="text-sm font-bold uppercase tracking-wider">{m.label}</CardTitle>
+                    </CardHeader>
+                    <CardContent className="h-[220px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={chartData} margin={{ top: 4, right: 4, bottom: 0, left: 0 }}>
+                          <defs>
+                            <linearGradient id={`grad-${m.id}`} x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor={m.color} stopOpacity={0.15} />
+                              <stop offset="95%" stopColor={m.color} stopOpacity={0} />
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F0F0F0" />
+                          <XAxis dataKey="week" fontSize={10} tickLine={false} axisLine={false} />
+                          <YAxis fontSize={10} tickLine={false} axisLine={false} width={36} />
+                          <Tooltip
+                            contentStyle={{ fontSize: '12px', border: '1px solid #E5E5E5', borderRadius: '8px' }}
+                            formatter={(v: any) => [formatVal(v), m.label]}
+                          />
+                          <Area
+                            type="monotone" dataKey={m.id}
+                            stroke={m.color} strokeWidth={2.5}
+                            fill={`url(#grad-${m.id})`}
+                            dot={false} activeDot={{ r: 4, strokeWidth: 0 }}
+                          />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Footer */}
+        <div className="pt-6 border-t text-center">
+          <p className="text-xs text-muted-foreground">
+            Powered by <span className="font-bold text-foreground">Myntmore</span> · Data refreshes weekly
+          </p>
+        </div>
+      </div>
+    </div>
+  )
+}

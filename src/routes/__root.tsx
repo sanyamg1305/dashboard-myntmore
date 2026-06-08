@@ -6,6 +6,7 @@ import {
   useRouter,
   useRouterState,
 } from "@tanstack/react-router";
+import { useEffect } from "react";
 
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { Toaster } from "@/components/ui/sonner";
@@ -67,12 +68,22 @@ function RootComponent() {
 }
 
 function AppLayout() {
-  const { user, loading } = useAuth();
+  const { user, loading, isClient } = useAuth();
   const path = useRouterState({ select: (s) => s.location.pathname });
+  const navigate = useNavigate();
 
-  const noSidebarPaths = ['/login', '/accept-invite'];
+  const noSidebarPaths = ['/login', '/accept-invite', '/portal'];
   const isAuthPath = noSidebarPaths.some(p => path.startsWith(p));
   const showSidebar = user && !isAuthPath;
+
+  // Guard: redirect client users away from internal pages
+  useEffect(() => {
+    if (loading) return;
+    if (!user) return;
+    if (isClient && !path.startsWith('/portal') && !path.startsWith('/login')) {
+      navigate({ to: '/portal' });
+    }
+  }, [loading, user, isClient, path]);
 
   if (loading) {
     return (

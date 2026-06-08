@@ -9,11 +9,19 @@ type Profile = {
   department: string | null;
 };
 
+export type ClientRecord = {
+  id: string;
+  name: string;
+  company: string | null;
+};
+
 type AuthCtx = {
   session: Session | null;
   user: User | null;
   profile: Profile | null;
   isAdmin: boolean;
+  isClient: boolean;
+  clientRecord: ClientRecord | null;
   userRole: string | null;
   loading: boolean;
   signOut: () => Promise<void>;
@@ -47,28 +55,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+  const [clientRecord, setClientRecord] = useState<ClientRecord | null>(null);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   const loadProfile = async (userId: string) => {
     try {
-      const role = await fetchUserRole(userId);
-      console.log('Current user ID:', userId)
-      console.log('Role from user_roles table:', role)
-      
-      const { data: p } = await supabase
-        .from("profiles")
-        .select("id,email,full_name,department")
-        .eq("id", userId)
-        .maybeSingle();
+      const [role, { data: p }, { data: clientData }] = await Promise.all([
+        fetchUserRole(userId),
+        supabase.from("profiles").select("id,email,full_name,department").eq("id", userId).maybeSingle(),
+        supabase.from("clients").select("id,name,company").eq("user_id" as any, userId).maybeSingle(),
+      ]);
 
       setProfile(p as Profile | null);
       setUserRole(role);
       setIsAdmin(role === "admin");
+      if (clientData) {
+        setIsClient(true);
+        setClientRecord(clientData as ClientRecord);
+      } else {
+        setIsClient(false);
+        setClientRecord(null);
+      }
     } catch (error) {
       console.error("Error loading profile/role:", error);
       setUserRole('member');
       setIsAdmin(false);
+      setIsClient(false);
+      setClientRecord(null);
     }
   };
 
@@ -81,6 +96,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setProfile(null);
         setUserRole(null);
         setIsAdmin(false);
+        setIsClient(false);
+        setClientRecord(null);
       }
     });
 
@@ -113,6 +130,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user: session?.user ?? null,
         profile,
         isAdmin,
+        isClient,
+        clientRecord,
         userRole,
         loading,
         signOut,
