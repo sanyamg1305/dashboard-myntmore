@@ -47,34 +47,24 @@ export async function backfillHighScores(clientId: string): Promise<void> {
       best['L17'] = { value: posRate, week: weekStart, name: 'Positive Response Rate' }
   }
 
+  // Always overwrite with truth from weekly_data — this corrects any stale/garbage entries
+  // First delete ALL existing high_scores for this client, then re-insert only what's real
+  await supabase.from('high_scores').delete().eq('client_id', clientId)
+
   if (Object.keys(best).length === 0) return
 
-  // Fetch existing stored highs to avoid unnecessary writes
-  const { data: existing } = await supabase
-    .from('high_scores')
-    .select('metric_id, lifetime_high')
-    .eq('client_id', clientId)
+  const upsertRows = Object.entries(best).map(([id, { value, week, name }]) => ({
+    client_id: clientId,
+    metric_id: id,
+    metric_name: name,
+    lifetime_high: value,
+    achieved_week: week,
+    previous_high: null,
+    updated_at: new Date().toISOString(),
+  }))
 
-  const existingMap: Record<string, number | null> = {}
-  existing?.forEach(s => { existingMap[s.metric_id] = s.lifetime_high })
-
-  // Only upsert rows where the computed best differs from what's stored
-  const upsertRows = Object.entries(best)
-    .filter(([id, { value }]) => existingMap[id] === undefined || (existingMap[id] ?? 0) < value)
-    .map(([id, { value, week, name }]) => ({
-      client_id: clientId,
-      metric_id: id,
-      metric_name: name,
-      lifetime_high: value,
-      achieved_week: week,
-      previous_high: existingMap[id] ?? null,
-      updated_at: new Date().toISOString(),
-    }))
-
-  if (upsertRows.length > 0) {
-    await supabase.from('high_scores').upsert(upsertRows, { onConflict: 'client_id,metric_id' })
-    console.log(`✅ Backfilled ${upsertRows.length} high score(s) for client ${clientId}`)
-  }
+  await supabase.from('high_scores').insert(upsertRows)
+  console.log(`✅ Backfilled ${upsertRows.length} true high score(s) for client ${clientId}`)
 }
 
 const TRACKED_METRICS = [
