@@ -103,7 +103,7 @@ export function SalesOutreachPage({ embedded }: { embedded?: boolean } = {}) {
           tj_outreach: { SO01: flat.SO01, SO02: flat.SO02, SO03: flat.SO03, SO04: flat.SO04, SO05: flat.SO05, SO06: flat.SO06, SO07: flat.SO07, SO08: flat.SO08, SO09: flat.SO09 },
           jahnvi_outreach: { SO10: flat.SO10, SO11: flat.SO11, SO12: flat.SO12, SO13: flat.SO13, SO14: flat.SO14, SO15: flat.SO15, SO16: flat.SO16, SO17: flat.SO17 },
           shirin_outreach: { SO18: flat.SO18, SO19: flat.SO19, SO20: flat.SO20, SO21: flat.SO21, SO22: flat.SO22, SO23: flat.SO23, SO24: flat.SO24, SO25: flat.SO25, SO26: flat.SO26, SO27: flat.SO27, SO28: flat.SO28 },
-          cold_email: { SO29: flat.SO29, SO30: flat.SO30, SO31: flat.SO31, SO32: flat.SO32, SO33: flat.SO33, SO34: flat.SO34, SO35: flat.SO35 },
+          cold_email: { SO29: flat.SO29, SO30: flat.SO30, SO31: flat.SO31, SO32: flat.SO32, SO33: flat.SO33, SO34: flat.SO34, SO35: flat.SO35, SO50: flat.SO50, SO51: flat.SO51, SO53: flat.SO53, SO55: flat.SO55 },
           meeting_tracker: { SO36: flat.SO36, SO37: flat.SO37, SO38: flat.SO38, SO39: flat.SO39, SO40: flat.SO40, SO41: flat.SO41, SO42: flat.SO42, SO43: flat.SO43, SO44: flat.SO44, SO45: flat.SO45, SO46: flat.SO46, SO47: flat.SO47, SO48: flat.SO48, SO49: flat.SO49 }
         })
       } else {
@@ -205,7 +205,7 @@ export function SalesOutreachPage({ embedded }: { embedded?: boolean } = {}) {
         tj_outreach: extractSection({ ...updated.tj_outreach }, ['SO01','SO02','SO03','SO04','SO05','SO06','SO07','SO08','SO09']),
         jahnvi_outreach: extractSection({ ...updated.jahnvi_outreach }, ['SO10','SO11','SO12','SO13','SO14','SO15','SO16','SO17']),
         shirin_outreach: extractSection({ ...updated.shirin_outreach }, ['SO18','SO19','SO20','SO21','SO22','SO23','SO24','SO25','SO26','SO27','SO28']),
-        cold_email: extractSection({ ...updated.cold_email }, ['SO29','SO30','SO31','SO32','SO33','SO34','SO35']),
+        cold_email: extractSection({ ...updated.cold_email }, ['SO29','SO30','SO31','SO32','SO33','SO34','SO35','SO50','SO51','SO53','SO55']),
         meeting_tracker: extractSection({ ...updated.meeting_tracker }, ['SO36','SO37','SO38','SO39','SO40','SO41','SO42','SO43','SO44','SO45','SO46','SO47','SO48','SO49']),
         week_end: weekInfo?.weekEnd || '',
         week_label: weekInfo?.label || '',
@@ -382,7 +382,7 @@ export function SalesOutreachPage({ embedded }: { embedded?: boolean } = {}) {
             </div>
           ) : (
             <>
-              <Accordion type="multiple" defaultValue={['tj', 'jj', 'shirin', 'email', 'meetings']} className="space-y-4">
+              <Accordion type="multiple" defaultValue={['tj', 'jj', 'shirin', 'email', 'cold_emailing', 'meetings']} className="space-y-4">
                 {/* TJ Section */}
                 <AccordionItem value="tj" className="border rounded-lg bg-card overflow-hidden">
                   <AccordionTrigger className="px-4 py-3 hover:bg-muted/30 hover:no-underline font-bold text-lg">TJ Outreach</AccordionTrigger>
@@ -547,6 +547,37 @@ export function SalesOutreachPage({ embedded }: { embedded?: boolean } = {}) {
                     <div className="space-y-1.5">
                       <Label className="text-xs font-bold uppercase opacity-60">SO35 - Response Rate</Label>
                       <div className="h-10 bg-muted/50 rounded-md flex items-center px-3 font-bold text-lg">{getRate(formData.cold_email.SO32, formData.cold_email.SO29)}%</div>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+
+                {/* Cold Emailing Section */}
+                <AccordionItem value="cold_emailing" className="border rounded-lg bg-card overflow-hidden">
+                  <AccordionTrigger className="px-4 py-3 hover:bg-muted/30 hover:no-underline font-bold text-lg">Cold Emailing</AccordionTrigger>
+                  <AccordionContent className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-bold uppercase opacity-60">SO50 - Emails Sent (Week)</Label>
+                      <Input type="number" value={formData.cold_email.SO50 || ''} onChange={e => updateMetric('cold_email', 'SO50', e.target.value)} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-bold uppercase opacity-60">SO51 - Replies</Label>
+                      <Input type="number" value={formData.cold_email.SO51 || ''} onChange={e => updateMetric('cold_email', 'SO51', e.target.value)} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-bold uppercase opacity-60">SO52 - Reply Rate</Label>
+                      <div className="h-10 bg-muted/50 rounded-md flex items-center px-3 font-bold text-lg">{getRate(formData.cold_email.SO51, formData.cold_email.SO50)}%</div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-bold uppercase opacity-60">SO53 - Positive Replies</Label>
+                      <Input type="number" value={formData.cold_email.SO53 || ''} onChange={e => updateMetric('cold_email', 'SO53', e.target.value)} />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-bold uppercase opacity-60">SO54 - Positive Reply Rate</Label>
+                      <div className="h-10 bg-muted/50 rounded-md flex items-center px-3 font-bold text-lg">{getRate(formData.cold_email.SO53, formData.cold_email.SO51)}%</div>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-bold uppercase opacity-60">SO55 - Replied with OOO</Label>
+                      <Input type="number" value={formData.cold_email.SO55 || ''} onChange={e => updateMetric('cold_email', 'SO55', e.target.value)} />
                     </div>
                   </AccordionContent>
                 </AccordionItem>
