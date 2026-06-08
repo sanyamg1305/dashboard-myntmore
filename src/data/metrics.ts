@@ -68,9 +68,9 @@ export const LEADGEN_METRICS: Metric[] = [
   { id: 'L17', name: 'Positive Response Rate', type: 'auto', category: 'leadgen', group: 'Connection Request Outreach', autoFormula: 'L15/L13*100', dependsOn: ['L15','L13'], hasTarget: false, hasNote: false, unit: '%' },
   { id: 'L18', name: 'Negative Response Rate', type: 'auto', category: 'leadgen', group: 'Connection Request Outreach', autoFormula: 'L16/L13*100', dependsOn: ['L16','L13'], hasTarget: false, hasNote: false, unit: '%' },
   // Existing Connections
-  { id: 'L19', name: 'Existing Connections Msgs Sent', type: 'number', category: 'leadgen', group: 'Existing Connections', hasTarget: false, hasNote: false },
+  { id: 'L19', name: 'Existing Connections Msgs Sent', type: 'number', category: 'leadgen', group: 'Existing Connections', hasTarget: true, hasNote: false },
   { id: 'L20', name: 'Existing Connections Answered', type: 'number', category: 'leadgen', group: 'Existing Connections', hasTarget: false, hasNote: false },
-  { id: 'L21', name: 'Existing Connections Rate', type: 'auto', category: 'leadgen', group: 'Existing Connections', autoFormula: 'L20/L19*100', dependsOn: ['L20','L19'], hasTarget: false, hasNote: false, unit: '%' },
+  { id: 'L21', name: 'Existing Connections Rate', type: 'auto', category: 'leadgen', group: 'Existing Connections', autoFormula: 'L20/L19*100', dependsOn: ['L20','L19'], hasTarget: true, hasNote: false, unit: '%' },
   { id: 'L22', name: 'Existing Connections Hot Leads', type: 'number', category: 'leadgen', group: 'Existing Connections', hasTarget: false, hasNote: false },
   // Pipeline & Conversion
   { id: 'L24', name: 'Meetings Booked', type: 'number', category: 'leadgen', group: 'Pipeline & Conversion', hasTarget: true, hasNote: false },
