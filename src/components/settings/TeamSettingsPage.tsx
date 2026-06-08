@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
-import { UserPlus, Copy, Check, RefreshCw, Ban, Shield, Trash2 } from "lucide-react"
+import { UserPlus, Copy, Check, RefreshCw, Ban, Shield, Trash2, KeyRound } from "lucide-react"
 
 export function TeamSettingsPage() {
   const { user: currentUser } = useAuth()
@@ -180,6 +180,18 @@ export function TeamSettingsPage() {
     }
   }
 
+  const handleResetPassword = async (email: string, name: string) => {
+    if (!confirm(`Send a password reset email to ${name} (${email})?`)) return
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + '/login'
+    })
+    if (error) {
+      toast.error('Failed to send reset email: ' + error.message)
+    } else {
+      toast.success(`Password reset email sent to ${email}`)
+    }
+  }
+
   const openEditModal = (user: any) => {
     setEditingUser(user)
     setEditingName(user.full_name || '')
@@ -333,6 +345,15 @@ export function TeamSettingsPage() {
                         onClick={() => openEditModal(u)}
                       >
                         ✏️ Edit
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-amber-600 hover:text-amber-700 font-medium gap-1"
+                        title="Send password reset email"
+                        onClick={() => handleResetPassword(u.email, u.full_name)}
+                      >
+                        <KeyRound className="w-3.5 h-3.5" /> Reset Password
                       </Button>
                       <Button variant="ghost" size="icon" title={u.disabled ? "Enable" : "Disable"} onClick={() => handleToggleDisable(u.id, !!u.disabled)}>
                         {u.disabled ? <Check className="w-4 h-4 text-status-on" /> : <Ban className="w-4 h-4 text-destructive" />}
