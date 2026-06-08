@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { supabase } from "@/integrations/supabase/client"
+import { supabase, supabaseAdmin } from "@/integrations/supabase/client"
 import { useAuth } from "@/lib/auth"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -20,6 +20,10 @@ export function TeamSettingsPage() {
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false)
   const [isLinkModalOpen, setIsLinkModalOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [isResetModalOpen, setIsResetModalOpen] = useState(false)
+  const [resetUser, setResetUser] = useState<any>(null)
+  const [newPassword, setNewPassword] = useState('')
+  const [resetLoading, setResetLoading] = useState(false)
   const [generatedLink, setGeneratedLink] = useState('')
   const [inviteeName, setInviteeName] = useState('')
   const [editingUser, setEditingUser] = useState<any>(null)
@@ -180,15 +184,32 @@ export function TeamSettingsPage() {
     }
   }
 
-  const handleResetPassword = async (email: string, name: string) => {
-    if (!confirm(`Send a password reset email to ${name} (${email})?`)) return
-    const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: window.location.origin + '/login'
-    })
+  const openResetModal = (user: any) => {
+    setResetUser(user)
+    setNewPassword('')
+    setIsResetModalOpen(true)
+  }
+
+  const handleSetPassword = async () => {
+    if (!resetUser) return
+    if (newPassword.length < 6) {
+      toast.error('Password must be at least 6 characters')
+      return
+    }
+    if (!supabaseAdmin) {
+      toast.error('Admin key not configured — add VITE_SUPABASE_SERVICE_ROLE_KEY to your environment')
+      return
+    }
+    setResetLoading(true)
+    const { error } = await supabaseAdmin.auth.admin.updateUserById(resetUser.id, { password: newPassword })
+    setResetLoading(false)
     if (error) {
-      toast.error('Failed to send reset email: ' + error.message)
+      toast.error('Failed to reset password: ' + error.message)
     } else {
-      toast.success(`Password reset email sent to ${email}`)
+      toast.success(`Password updated for ${resetUser.full_name}`)
+      setIsResetModalOpen(false)
+      setResetUser(null)
+      setNewPassword('')
     }
   }
 
@@ -350,8 +371,8 @@ export function TeamSettingsPage() {
                         variant="ghost"
                         size="sm"
                         className="text-amber-600 hover:text-amber-700 font-medium gap-1"
-                        title="Send password reset email"
-                        onClick={() => handleResetPassword(u.email, u.full_name)}
+                        title="Set a new password for this user"
+                        onClick={() => openResetModal(u)}
                       >
                         <KeyRound className="w-3.5 h-3.5" /> Reset Password
                       </Button>
@@ -430,6 +451,44 @@ export function TeamSettingsPage() {
           </div>
           <DialogFooter>
             <Button onClick={() => setIsLinkModalOpen(false)} className="w-full">Done</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reset Password Modal */}
+      <Dialog open={isResetModalOpen} onOpenChange={setIsResetModalOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <KeyRound className="w-4 h-4 text-amber-500" /> Reset Password
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Set a new password for <span className="font-bold text-foreground">{resetUser?.full_name}</span> ({resetUser?.email})
+            </p>
+            <div className="grid gap-2">
+              <Label>New Password</Label>
+              <Input
+                type="password"
+                placeholder="Min. 6 characters"
+                value={newPassword}
+                onChange={e => setNewPassword(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleSetPassword()}
+                autoFocus
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsResetModalOpen(false)}>Cancel</Button>
+            <Button
+              onClick={handleSetPassword}
+              disabled={resetLoading || newPassword.length < 6}
+              className="bg-amber-500 hover:bg-amber-600 text-white font-bold gap-2"
+            >
+              {resetLoading ? <RefreshCw className="w-4 h-4 animate-spin" /> : <KeyRound className="w-4 h-4" />}
+              Set Password
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
