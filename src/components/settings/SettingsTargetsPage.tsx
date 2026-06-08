@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/lib/auth"
 import { ALL_METRICS, Metric } from "@/data/metrics"
-import { getCurrentWeekStart, getWeekOptions } from "@/utils/weekUtils"
+import { getCurrentWeekStart, getWeekOptions, getWeekEnd, getWeekLabel } from "@/utils/weekUtils"
 import { toast } from "sonner"
 import { Card } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
