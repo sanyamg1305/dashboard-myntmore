@@ -1,5 +1,4 @@
 import React, { useState } from 'react'
-import { SidebarTrigger } from "@/components/ui/sidebar"
 import { TeamSettingsPage } from './TeamSettingsPage'
 import { ExportPage } from './ExportPage'
 import { SettingsTargetsPage } from './SettingsTargetsPage'
@@ -22,9 +21,8 @@ export function SettingsPage() {
 
   return (
     <div className="flex flex-1 flex-col">
-          <header className="flex h-12 items-center gap-2 border-b bg-background px-3">
-            <SidebarTrigger />
-            <span className="text-xs uppercase tracking-wider text-muted-foreground">
+          <header className="flex h-12 items-center gap-2 border-b bg-background px-6">
+            <span className="text-xs uppercase tracking-wider text-muted-foreground font-bold">
               Settings
             </span>
           </header>
