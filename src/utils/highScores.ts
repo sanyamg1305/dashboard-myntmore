@@ -113,7 +113,8 @@ export async function detectAndUpdateHighScores(
   // Pre-compute auto metrics
   const _C06 = readNum(contentMetrics, 'C06'), _C07 = readNum(contentMetrics, 'C07'), _C08 = readNum(contentMetrics, 'C08')
   const _C09stored = readNum(contentMetrics, 'C09')
-  const _C09 = _C09stored ?? ((_C06 ?? 0) + (_C07 ?? 0) + (_C08 ?? 0)) || null
+  const _C09computed = (_C06 ?? 0) + (_C07 ?? 0) + (_C08 ?? 0)
+  const _C09 = _C09stored ?? (_C09computed > 0 ? _C09computed : null)
   const _C10 = readNum(contentMetrics, 'C10')
   const _C26 = _C09 && _C09 > 0 && _C10 ? Math.round((_C10 / _C09) * 100) / 100 : null
 
