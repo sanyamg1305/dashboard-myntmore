@@ -81,8 +81,13 @@ export async function backfillHighScores(clientId: string): Promise<void> {
 
 const TRACKED_METRICS = [
   { id: 'C03', name: 'Posts Drafted', category: 'content' },
+  { id: 'C06', name: 'Text + Image Posts Posted', category: 'content' },
+  { id: 'C07', name: 'Carousels Posted', category: 'content' },
+  { id: 'C08', name: 'Videos Posted', category: 'content' },
   { id: 'C09', name: 'Total Posts Posted', category: 'content' },
   { id: 'C10', name: 'Impressions', category: 'content' },
+  { id: 'C11', name: 'Likes', category: 'content' },
+  { id: 'C12', name: 'Comments', category: 'content' },
   { id: 'C13', name: 'Engagement Total', category: 'content' },
   { id: 'C14', name: 'Profile Views', category: 'content' },
   { id: 'C15', name: 'New Followers', category: 'content' },
