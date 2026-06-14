@@ -23,9 +23,21 @@ export async function backfillHighScores(clientId: string): Promise<void> {
     const lm = row.leadgen_metrics as Record<string, any> ?? {}
     const weekStart = row.week_start
 
+    // Compute auto-calculated metrics that may not be stored directly
+    const C06 = readNum(cm, 'C06'), C07 = readNum(cm, 'C07'), C08 = readNum(cm, 'C08')
+    const C09stored = readNum(cm, 'C09')
+    const C09computed = (C06 ?? 0) + (C07 ?? 0) + (C08 ?? 0)
+    const C09 = C09stored ?? (C09computed > 0 ? C09computed : null)
+    const C10 = readNum(cm, 'C10')
+    const C26 = C09 && C09 > 0 && C10 ? Math.round((C10 / C09) * 100) / 100 : null
+
     TRACKED_METRICS.forEach(({ id, name, category }) => {
       const col = category === 'content' ? cm : lm
-      const val = readNum(col, id)
+      // Use computed values for auto metrics
+      let val: number | null = null
+      if (id === 'C09') val = C09
+      else if (id === 'C26') val = C26
+      else val = readNum(col, id)
       if (val !== null && val > 0) {
         if (!best[id] || val > best[id].value) {
           best[id] = { value: val, week: weekStart, name }
@@ -76,6 +88,8 @@ const TRACKED_METRICS = [
   { id: 'C15', name: 'New Followers', category: 'content' },
   { id: 'C16', name: 'Total Follower Count', category: 'content' },
   { id: 'C17', name: 'Engagement on Other Profiles', category: 'content' },
+  { id: 'C26', name: 'Avg Impressions Per Post', category: 'content' },
+  { id: 'C27', name: 'Video Views', category: 'content' },
   { id: 'L10', name: 'Connection Requests Sent', category: 'leadgen' },
   { id: 'L11', name: 'Accepted Invitations', category: 'leadgen' },
   { id: 'L13', name: 'Answered Messages', category: 'leadgen' },
@@ -96,9 +110,19 @@ export async function detectAndUpdateHighScores(
   // Build values map
   const values: Record<string, { value: number; name: string }> = {}
 
+  // Pre-compute auto metrics
+  const _C06 = readNum(contentMetrics, 'C06'), _C07 = readNum(contentMetrics, 'C07'), _C08 = readNum(contentMetrics, 'C08')
+  const _C09stored = readNum(contentMetrics, 'C09')
+  const _C09 = _C09stored ?? ((_C06 ?? 0) + (_C07 ?? 0) + (_C08 ?? 0)) || null
+  const _C10 = readNum(contentMetrics, 'C10')
+  const _C26 = _C09 && _C09 > 0 && _C10 ? Math.round((_C10 / _C09) * 100) / 100 : null
+
   TRACKED_METRICS.forEach(({ id, name, category }) => {
     const col = category === 'content' ? contentMetrics : leadgenMetrics
-    const val = readNum(col, id)
+    let val: number | null = null
+    if (id === 'C09') val = _C09
+    else if (id === 'C26') val = _C26
+    else val = readNum(col, id)
     if (val !== null && val > 0) {
       values[id] = { value: val, name }
     }

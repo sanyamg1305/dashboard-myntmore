@@ -317,7 +317,7 @@ export function DashboardPage() {
             <TableHead className="text-[10px] font-black uppercase">Metric Name</TableHead>
             <TableHead className="text-[10px] font-black uppercase text-center">This Week</TableHead>
             <TableHead className="text-[10px] font-black uppercase text-center">Prev Week</TableHead>
-            <TableHead className="text-[10px] font-black uppercase text-center">Delta</TableHead>
+            <TableHead className="text-[10px] font-black uppercase text-center">vs Target</TableHead>
             <TableHead className="text-[10px] font-black uppercase text-center">Target</TableHead>
             <TableHead className="text-[10px] font-black uppercase text-center">Ach%</TableHead>
             <TableHead className="text-[10px] font-black uppercase text-center text-amber-600">Best Ever</TableHead>
@@ -374,8 +374,8 @@ export function DashboardPage() {
                     <TableCell className="py-1 text-center text-xs text-muted-foreground">
                       {['L12', 'L14', 'L17'].includes(m.id) ? formatPct(prev as number) : formatDashboardValue(prev, m.id)}
                     </TableCell>
-                    <TableCell className="py-1 text-center text-xs font-bold" style={{ color: fmtDelta(current as any, prev as any).color }}>
-                      {fmtDelta(current as any, prev as any).text}
+                    <TableCell className="py-1 text-center text-xs font-bold" style={{ color: fmtDelta(current as any, target as any).color }}>
+                      {target !== null ? fmtDelta(current as any, target as any).text : '—'}
                     </TableCell>
                     <TableCell className="py-1 text-center text-xs text-muted-foreground">{formatMetricValue(target, m.id)}</TableCell>
                     <TableCell className={cn("py-1 text-center text-xs font-black rounded", achColor, achBg)}>{ach}</TableCell>
@@ -1207,22 +1207,34 @@ export function DashboardPage() {
 
                                 {/* Qualitative Cards */}
                                 <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-                                  <div className="p-4 bg-background border rounded-lg shadow-sm">
-                                    <p className="text-[10px] font-black uppercase text-muted-foreground mb-3 flex items-center gap-1.5">
-                                      <CheckCircle2 className="w-3 h-3 text-status-on" /> What's Working (Content)
-                                    </p>
-                                    <p className="text-sm font-medium leading-relaxed italic text-foreground/80">
-                                      {sv(currentData, 'content_metrics', 'C24') || 'No input provided.'}
-                                    </p>
-                                  </div>
-                                  <div className="p-4 bg-background border rounded-lg shadow-sm">
-                                    <p className="text-[10px] font-black uppercase text-muted-foreground mb-3 flex items-center gap-1.5">
-                                      <AlertTriangle className="w-3 h-3 text-status-risk" /> What's Not Working / Blockers
-                                    </p>
-                                    <p className="text-sm font-medium leading-relaxed italic text-foreground/80">
-                                      {sv(currentData, 'leadgen_metrics', 'L29') || 'No input provided.'}
-                                    </p>
-                                  </div>
+                                  {[
+                                    { label: "What's Working (Content)", icon: <CheckCircle2 className="w-3 h-3 text-status-on" />, value: sv(currentData, 'content_metrics', 'C24') },
+                                    { label: "What's Not Working / Blockers", icon: <AlertTriangle className="w-3 h-3 text-status-risk" />, value: sv(currentData, 'leadgen_metrics', 'L29') },
+                                  ].map(({ label, icon, value }) => {
+                                    const noteId = `${client.id}-${label}`
+                                    const isOpen = expandedClients.has(noteId)
+                                    return (
+                                      <div key={label} className="p-4 bg-background border rounded-lg shadow-sm">
+                                        <button
+                                          className="text-[10px] font-black uppercase text-muted-foreground mb-1 flex items-center gap-1.5 w-full text-left hover:text-foreground transition-colors"
+                                          onClick={() => {
+                                            const next = new Set(expandedClients)
+                                            if (isOpen) next.delete(noteId)
+                                            else next.add(noteId)
+                                            setExpandedClients(next)
+                                          }}
+                                        >
+                                          {icon} {label}
+                                          {isOpen ? <ChevronUp className="w-3 h-3 ml-auto" /> : <ChevronDown className="w-3 h-3 ml-auto" />}
+                                        </button>
+                                        {isOpen && (
+                                          <p className="text-sm font-medium leading-relaxed italic text-foreground/80 mt-2">
+                                            {value || 'No input provided.'}
+                                          </p>
+                                        )}
+                                      </div>
+                                    )
+                                  })}
                                   <div className="p-4 bg-background border rounded-lg shadow-sm">
                                     <p className="text-[10px] font-black uppercase text-muted-foreground mb-3 flex items-center gap-1.5">
                                       <Target className="w-3 h-3 text-gold" /> Happiness Index & Notes
