@@ -24,8 +24,10 @@ export const CONTENT_METRICS: Metric[] = [
   { id: 'C07', name: 'Carousels Posted', type: 'number', category: 'content', group: 'Post Output', hasTarget: true, hasNote: false },
   { id: 'C08', name: 'Videos Posted', type: 'number', category: 'content', group: 'Post Output', hasTarget: true, hasNote: false },
   { id: 'C09', name: 'Total Posts Posted', type: 'auto', category: 'content', group: 'Post Output', autoFormula: 'C06+C07+C08', dependsOn: ['C06','C07','C08'], hasTarget: true, hasNote: false },
+  { id: 'C27', name: 'Video Views', type: 'number', category: 'content', group: 'Post Output', hasTarget: false, hasNote: false },
   // Performance
   { id: 'C10', name: 'Impressions', type: 'number', category: 'content', group: 'Performance', hasTarget: true, hasNote: false },
+  { id: 'C26', name: 'Avg Impressions Per Post', type: 'auto', category: 'content', group: 'Performance', autoFormula: 'C10/C09', dependsOn: ['C10','C09'], hasTarget: false, hasNote: false },
   { id: 'C11', name: 'Likes', type: 'number', category: 'content', group: 'Performance', hasTarget: false, hasNote: false },
   { id: 'C12', name: 'Comments', type: 'number', category: 'content', group: 'Performance', hasTarget: false, hasNote: false },
   { id: 'C13', name: 'Engagement Total', type: 'number', category: 'content', group: 'Performance', hasTarget: true, hasNote: false },
@@ -55,7 +57,6 @@ export const LEADGEN_METRICS: Metric[] = [
   { id: 'L05', name: 'InMail Acceptance Rate', type: 'auto', category: 'leadgen', group: 'InMail Outreach', autoFormula: 'L03/L02*100', dependsOn: ['L03','L02'], hasTarget: false, hasNote: false, unit: '%' },
   { id: 'L06', name: 'InMail Hot Leads', type: 'number', category: 'leadgen', group: 'InMail Outreach', hasTarget: false, hasNote: false },
   // Connection Request Outreach
-  { id: 'L07', name: 'ICP Targeted', type: 'textarea', category: 'leadgen', group: 'Connection Request Outreach', hasTarget: false, hasNote: false },
   { id: 'L08', name: 'Message Narrative / Strategy', type: 'textarea', category: 'leadgen', group: 'Connection Request Outreach', hasTarget: false, hasNote: false },
   { id: 'L10', name: 'Connection Requests Sent', type: 'number', category: 'leadgen', group: 'Connection Request Outreach', hasTarget: true, hasNote: false },
   { id: 'L11', name: 'Accepted Invitations', type: 'number', category: 'leadgen', group: 'Connection Request Outreach', hasTarget: false, hasNote: false },
