@@ -131,6 +131,7 @@ export function DashboardPage() {
   const [prevWeeklyData, setPrevWeeklyData] = useState<WeeklyData[]>([])
   const [monthWeeklyData, setMonthWeeklyData] = useState<WeeklyDataSummary[]>([])
   const [targets, setTargets] = useState<MetricTarget[]>([])
+  const [monthlyTargets, setMonthlyTargets] = useState<MetricTarget[]>([])
   const [highScores, setHighScores] = useState<HighScore[]>([])
   const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null)
   const [actionables, setActionables] = useState<Actionable[]>([])
@@ -298,6 +299,8 @@ export function DashboardPage() {
     prevData,
     category,
     clientTargets,
+    clientMonthlyTargets,
+    clientMtdTotals,
     clientHighScores
   }: {
     metrics: any[],
@@ -305,6 +308,8 @@ export function DashboardPage() {
     prevData: any,
     category: 'content_metrics' | 'leadgen_metrics',
     clientTargets: any[],
+    clientMonthlyTargets: any[],
+    clientMtdTotals: Record<string, number>,
     clientHighScores: HighScore[]
   }) => {
     const currentBuilt = buildWeekMetrics(currentData)
@@ -319,7 +324,8 @@ export function DashboardPage() {
             <TableHead className="text-[10px] font-black uppercase text-center">Prev Week</TableHead>
             <TableHead className="text-[10px] font-black uppercase text-center">vs Target</TableHead>
             <TableHead className="text-[10px] font-black uppercase text-center">Target</TableHead>
-            <TableHead className="text-[10px] font-black uppercase text-center">Ach%</TableHead>
+            <TableHead className="text-[10px] font-black uppercase text-center">Wk Ach%</TableHead>
+            <TableHead className="text-[10px] font-black uppercase text-center text-blue-600">Mo Ach%</TableHead>
             <TableHead className="text-[10px] font-black uppercase text-center text-amber-600">Best Ever</TableHead>
           </TableRow>
         </TableHeader>
@@ -328,6 +334,7 @@ export function DashboardPage() {
             const current = currentBuilt?.[m.id as keyof typeof currentBuilt] ?? null
             const prev = prevBuilt?.[m.id as keyof typeof prevBuilt] ?? null
             const target = clientTargets.find(t => t.metric_id === m.id)?.target_value ?? null
+            const monthlyTarget = clientMonthlyTargets.find(t => t.metric_id === m.id)?.target_value ?? null
             const hs = clientHighScores.find(h => h.metric_id === m.id)
             const bestEver = hs?.lifetime_high ?? null
             const currentNum = current !== null && !isNaN(Number(current)) ? Number(current) : null
@@ -340,24 +347,31 @@ export function DashboardPage() {
               ach = achNum + '%'
             }
 
-            const achColor = achNum === null ? ''
-              : achNum >= 100 ? 'text-blue-600'
-              : achNum >= 75  ? 'text-green-600'
-              : achNum >= 50  ? 'text-amber-600'
+            const achColor = (n: number | null) => n === null ? ''
+              : n >= 100 ? 'text-blue-600'
+              : n >= 75  ? 'text-green-600'
+              : n >= 50  ? 'text-amber-600'
               : 'text-red-600'
-
-            const achBg = achNum === null ? ''
-              : achNum >= 100 ? 'bg-blue-50'
-              : achNum >= 75  ? 'bg-green-50'
-              : achNum >= 50  ? 'bg-amber-50'
+            const achBg = (n: number | null) => n === null ? ''
+              : n >= 100 ? 'bg-blue-50'
+              : n >= 75  ? 'bg-green-50'
+              : n >= 50  ? 'bg-amber-50'
               : 'bg-red-50'
+
+            const mtdVal = clientMtdTotals[m.id] ?? null
+            let moAchNum: number | null = null
+            let moAch = '—'
+            if (monthlyTarget && mtdVal !== null) {
+              moAchNum = Math.round((mtdVal / Number(monthlyTarget)) * 100)
+              moAch = moAchNum + '%'
+            }
 
             return (
               <TableRow key={m.id} className="h-8">
                 <TableCell className="py-1 text-xs font-medium">{m.name}</TableCell>
                 {m.type === 'textarea' ? (
                   <TableCell
-                    colSpan={6}
+                    colSpan={7}
                     className="py-1 text-left"
                     style={{ fontSize: '12px', color: '#666', fontStyle: 'italic' }}
                   >
@@ -365,7 +379,7 @@ export function DashboardPage() {
                   </TableCell>
                 ) : (
                   <>
-                    <TableCell className={cn("py-1 text-center text-xs font-bold rounded", achColor)}>
+                    <TableCell className={cn("py-1 text-center text-xs font-bold rounded", achColor(achNum))}>
                       <span className="inline-flex items-center gap-1 justify-center">
                         {isNewHigh && <span title="New high score! 👑" className="text-amber-400 text-sm leading-none">👑</span>}
                         {['L12', 'L14', 'L17'].includes(m.id) ? formatPct(current as number) : formatDashboardValue(current, m.id)}
@@ -378,7 +392,10 @@ export function DashboardPage() {
                       {target !== null ? fmtDelta(current as any, target as any).text : '—'}
                     </TableCell>
                     <TableCell className="py-1 text-center text-xs text-muted-foreground">{formatMetricValue(target, m.id)}</TableCell>
-                    <TableCell className={cn("py-1 text-center text-xs font-black rounded", achColor, achBg)}>{ach}</TableCell>
+                    <TableCell className={cn("py-1 text-center text-xs font-black rounded", achColor(achNum), achBg(achNum))}>{ach}</TableCell>
+                    <TableCell className={cn("py-1 text-center text-xs font-black rounded", achColor(moAchNum), achBg(moAchNum))}
+                      title={mtdVal !== null && monthlyTarget ? `MTD: ${mtdVal} / ${monthlyTarget}` : undefined}
+                    >{moAch}</TableCell>
                     <TableCell
                       className="py-1 text-center text-xs font-bold text-amber-600 cursor-help"
                       title={hs?.achieved_week ? `Achieved: w/c ${new Date(hs.achieved_week).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}` : undefined}
@@ -663,6 +680,7 @@ export function DashboardPage() {
         { data: profilesData },
         { data: actionablesData },
         { data: targetsData },
+        { data: monthlyTargetsData },
         { data: highScoresData },
         { data: monthWeeksRes },
         { data: pData },
@@ -682,6 +700,7 @@ export function DashboardPage() {
         supabase.from('profiles').select('*'),
         supabase.from('actionables').select('*').eq('status', 'todo'),
         supabase.from('targets').select('*').eq('period', weekStart).eq('target_type', 'weekly'),
+        supabase.from('targets').select('*').eq('period', weekStart.slice(0, 7)).eq('target_type', 'monthly'),
         supabase.from('high_scores').select('*'),
         supabase.from('weekly_data').select('week_start, week_label, content_metrics, leadgen_metrics, client_id, content_submitted_at, leadgen_submitted_at')
           .gte('week_start', weekStart.slice(0, 7) + '-01')
@@ -706,6 +725,7 @@ export function DashboardPage() {
       setProfiles(profilesData || [])
       setActionables(actionablesData || [])
       setTargets(targetsData || [])
+      setMonthlyTargets(monthlyTargetsData || [])
       setHighScores(highScoresData || [])
       setProcessesData(pData || [])
       setProcessesUpdates(pUpdates || [])
@@ -1067,6 +1087,21 @@ export function DashboardPage() {
                       const score = health?.health_score ?? '-'
                       const isExpanded = expandedClients.has(client.id)
                       const clientTargets = targets.filter(t => t.client_id === client.id)
+                      const clientMonthlyTargets = monthlyTargets.filter(t => t.client_id === client.id)
+                      const clientMtdRows = monthWeeklyData.filter(w => w.client_id === client.id)
+                      const clientMtdTotals: Record<string, number> = {}
+                      for (const row of clientMtdRows) {
+                        const cm = (row.content_metrics as Record<string, any>) ?? {}
+                        const lm = (row.leadgen_metrics as Record<string, any>) ?? {}
+                        ALL_METRICS.forEach(m => {
+                          if (m.type === 'textarea' || m.type === 'boolean' || m.type === 'slider') return
+                          const col = m.category === 'content' ? cm : lm
+                          const v = col[m.id]
+                          if (v !== null && v !== undefined && !isNaN(Number(v))) {
+                            clientMtdTotals[m.id] = (clientMtdTotals[m.id] ?? 0) + Number(v)
+                          }
+                        })
+                      }
 
                       return (
                         <Card key={client.id} className={cn("border shadow-sm overflow-hidden transition-all", isExpanded ? "ring-2 ring-gold/20" : "")}>
@@ -1182,6 +1217,8 @@ export function DashboardPage() {
                                       prevData={prevData}
                                       category="content_metrics"
                                       clientTargets={clientTargets}
+                                      clientMonthlyTargets={clientMonthlyTargets}
+                                      clientMtdTotals={clientMtdTotals}
                                       clientHighScores={highScores.filter(h => h.client_id === client.id)}
                                     />
                                   </div>
@@ -1198,6 +1235,8 @@ export function DashboardPage() {
                                       prevData={prevData}
                                       category="leadgen_metrics"
                                       clientTargets={clientTargets}
+                                      clientMonthlyTargets={clientMonthlyTargets}
+                                      clientMtdTotals={clientMtdTotals}
                                       clientHighScores={highScores.filter(h => h.client_id === client.id)}
                                     />
                                   </div>
