@@ -1646,8 +1646,7 @@ function DashboardCampaignsSection({ clientId, displayWeek, onEditCampaign }: { 
   const [campaigns, setCampaigns] = useState<any[]>([])
   const monthWeeks = getWeeksInSameMonth(displayWeek)
 
-  useEffect(() => {
-    const load = async () => {
+  const load = async () => {
       const { data } = await supabase
         .from('campaigns')
         .select('*')
@@ -1676,9 +1675,9 @@ function DashboardCampaignsSection({ clientId, displayWeek, onEditCampaign }: { 
       })
 
       setCampaigns(enriched)
-    }
-    load()
-  }, [clientId, displayWeek])
+  }
+
+  useEffect(() => { load() }, [clientId, displayWeek])
 
   if (campaigns.length === 0) return null
 
@@ -1695,6 +1694,7 @@ function DashboardCampaignsSection({ clientId, displayWeek, onEditCampaign }: { 
             campaign={c}
             monthWeeks={monthWeeks}
             onEdit={onEditCampaign}
+            onWeekSaved={load}
           />
         ))}
       </div>
