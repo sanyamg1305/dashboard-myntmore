@@ -722,7 +722,7 @@ export function DashboardPage() {
         supabase.from('high_scores').select('*'),
         supabase.from('weekly_data').select('week_start, week_label, content_metrics, leadgen_metrics, client_id, content_submitted_at, leadgen_submitted_at')
           .gte('week_start', weekStart.slice(0, 7) + '-01')
-          .lte('week_start', weekStart.slice(0, 7) + '-31')
+          .lte('week_start', (() => { const [y, m] = weekStart.slice(0, 7).split('-').map(Number); return new Date(y, m, 0).toISOString().split('T')[0] })())
           .order('week_start', { ascending: true }),
         supabase.from('myntmore_processes').select('*').eq('status', 'active').order('priority', { ascending: true }).order('created_at', { ascending: true }),
         supabase.from('process_weekly_updates').select('*, profiles(full_name)').eq('week_start', weekStart)
