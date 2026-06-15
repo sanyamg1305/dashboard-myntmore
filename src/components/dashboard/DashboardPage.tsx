@@ -20,7 +20,7 @@ import { mv, mt, fmt, delta, deltaColor, tjVal, salesVal, sv, readMetric, format
 
 import { syncAllCampaignTotals } from '@/utils/campaignSync'
 import { fmt as gFmt, fmtDelta, Delta, fmtPct, fmtPctDelta } from "@/utils/format"
-import { calcRateCapped } from "@/utils/readMetric"
+import { calcRateCapped, readNum } from "@/utils/readMetric"
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
 import { buildWeekMetrics, formatMetricDisplay, formatPct } from "@/utils/metricCalculations"
 import { backfillHighScores } from "@/utils/highScores"
@@ -1106,17 +1106,18 @@ export function DashboardPage() {
                       const isExpanded = expandedClients.has(client.id)
                       const clientTargets = targets.filter(t => t.client_id === client.id)
                       const clientMonthlyTargets = monthlyTargets.filter(t => t.client_id === client.id)
-                      const clientMtdRows = monthWeeklyData.filter(w => w.client_id === client.id)
+                      // MTD = sum of all weeks in the month up to and including displayWeek
+                      const clientMtdRows = monthWeeklyData.filter(w => w.client_id === client.id && w.week_start <= displayWeek)
                       const clientMtdTotals: Record<string, number> = {}
                       for (const row of clientMtdRows) {
                         const cm = (row.content_metrics as Record<string, any>) ?? {}
                         const lm = (row.leadgen_metrics as Record<string, any>) ?? {}
                         ALL_METRICS.forEach(m => {
-                          if (m.type === 'textarea' || m.type === 'boolean' || m.type === 'slider') return
+                          if (m.type === 'textarea' || m.type === 'boolean' || m.type === 'slider' || m.type === 'auto') return
                           const col = m.category === 'content' ? cm : lm
-                          const v = col[m.id]
-                          if (v !== null && v !== undefined && !isNaN(Number(v))) {
-                            clientMtdTotals[m.id] = (clientMtdTotals[m.id] ?? 0) + Number(v)
+                          const v = readNum(col, m.id)
+                          if (v !== null) {
+                            clientMtdTotals[m.id] = (clientMtdTotals[m.id] ?? 0) + v
                           }
                         })
                       }
