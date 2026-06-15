@@ -317,6 +317,15 @@ export function DashboardPage() {
     const [expandedTextareas, setExpandedTextareas] = React.useState<Set<string>>(new Set())
     return (
     <div className="overflow-x-auto">
+      <div className="flex items-center gap-3 px-1 py-1.5 text-[10px] font-semibold text-muted-foreground border-b mb-1">
+        <span className="uppercase tracking-wide">Ach% key:</span>
+        <span className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded-sm bg-green-100 border border-green-400"></span><span className="text-green-700">≥100% On target</span></span>
+        <span className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded-sm bg-yellow-100 border border-yellow-400"></span><span className="text-yellow-700">75–99% Close</span></span>
+        <span className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded-sm bg-orange-100 border border-orange-400"></span><span className="text-orange-600">50–74% Below</span></span>
+        <span className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded-sm bg-red-100 border border-red-400"></span><span className="text-red-600">&lt;50% Off track</span></span>
+        <span className="flex items-center gap-1 ml-2"><span className="text-yellow-500">★</span><span>New high</span></span>
+        <span className="flex items-center gap-1"><span style={{ color: '#B8860B' }} className="font-bold">■</span><span style={{ color: '#B8860B' }}>Best ever</span></span>
+      </div>
       <Table>
         <TableHeader className="bg-muted/30 sticky top-0 z-10">
           <TableRow>
@@ -325,8 +334,8 @@ export function DashboardPage() {
             <TableHead className="text-[10px] font-black uppercase text-center">Prev Week</TableHead>
             <TableHead className="text-[10px] font-black uppercase text-center">Target</TableHead>
             <TableHead className="text-[10px] font-black uppercase text-center">Wk Ach%</TableHead>
-            <TableHead className="text-[10px] font-black uppercase text-center text-blue-600">Mo Ach%</TableHead>
-            <TableHead className="text-[10px] font-black uppercase text-center text-amber-600">Best Ever</TableHead>
+            <TableHead className="text-[10px] font-black uppercase text-center">Mo Ach%</TableHead>
+            <TableHead className="text-[10px] font-black uppercase text-center">Best Ever</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -348,14 +357,14 @@ export function DashboardPage() {
             }
 
             const achColor = (n: number | null) => n === null ? ''
-              : n >= 100 ? 'text-blue-600'
-              : n >= 75  ? 'text-green-600'
-              : n >= 50  ? 'text-amber-600'
+              : n >= 100 ? 'text-green-600'
+              : n >= 75  ? 'text-yellow-600'
+              : n >= 50  ? 'text-orange-500'
               : 'text-red-600'
             const achBg = (n: number | null) => n === null ? ''
-              : n >= 100 ? 'bg-blue-50'
-              : n >= 75  ? 'bg-green-50'
-              : n >= 50  ? 'bg-amber-50'
+              : n >= 100 ? 'bg-green-50'
+              : n >= 75  ? 'bg-yellow-50'
+              : n >= 50  ? 'bg-orange-50'
               : 'bg-red-50'
 
             const mtdVal = clientMtdTotals[m.id] ?? null
@@ -396,9 +405,9 @@ export function DashboardPage() {
                   </TableCell>
                 ) : (
                   <>
-                    <TableCell className={cn("py-1 text-center text-xs font-bold rounded", achColor(achNum))}>
+                    <TableCell className="py-1 text-center text-xs font-bold">
                       <span className="inline-flex items-center gap-1 justify-center">
-                        {isNewHigh && <span title="New high score! 👑" className="text-amber-400 text-sm leading-none">👑</span>}
+                        {isNewHigh && <span title="New high score!" className="text-yellow-500 text-sm leading-none">★</span>}
                         {['L12', 'L14', 'L17'].includes(m.id) ? formatPct(current as number) : formatDashboardValue(current, m.id)}
                       </span>
                     </TableCell>
@@ -411,7 +420,8 @@ export function DashboardPage() {
                       title={mtdVal !== null && monthlyTarget ? `MTD: ${mtdVal} / ${monthlyTarget}` : undefined}
                     >{moAch}</TableCell>
                     <TableCell
-                      className="py-1 text-center text-xs font-bold text-amber-600 cursor-help"
+                      className="py-1 text-center text-xs font-bold cursor-help"
+                      style={{ color: bestEver !== null ? '#B8860B' : undefined }}
                       title={hs?.achieved_week ? `Achieved: w/c ${new Date(hs.achieved_week).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}` : undefined}
                     >
                       {bestEver !== null ? formatDashboardValue(bestEver, m.id) : '—'}
