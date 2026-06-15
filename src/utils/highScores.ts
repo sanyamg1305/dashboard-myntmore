@@ -48,9 +48,9 @@ export async function backfillHighScores(clientId: string): Promise<void> {
     // Computed rates
     const L10 = readNum(lm, 'L10'), L11 = readNum(lm, 'L11')
     const L13 = readNum(lm, 'L13'), L15 = readNum(lm, 'L15')
-    const accRate = calcAcceptanceRate(L10, L11)
-    const respRate = calcResponseRate(L11, L13)
-    const posRate = calcPositiveRate(L13, L15)
+    const accRate = calcAcceptanceRate(L11, L10)
+    const respRate = calcResponseRate(L13, L11)
+    const posRate = calcPositiveRate(L15, L13)
     if (accRate && accRate > 0 && (!best['L12'] || accRate > best['L12'].value))
       best['L12'] = { value: accRate, week: weekStart, name: 'Acceptance Rate' }
     if (respRate && respRate > 0 && (!best['L14'] || respRate > best['L14'].value))

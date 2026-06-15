@@ -31,7 +31,7 @@ export const calcResponseRate = (answered: number | null, accepted: number | nul
 export const calcMeetingShowUpRate = (showedUp: number | null, booked: number | null) => calcRateCapped(showedUp, booked)
 
 // Uncapped rates
-export const calcPositiveRate = (positive: number | null, answered: number | null) => calcRateUncapped(positive, answered)
+export const calcPositiveRate = (positive: number | null, answered: number | null) => calcRateCapped(positive, answered)
 export const calcExistingConnRate = (replied: number | null, sent: number | null) => calcRateCapped(replied, sent) // wait, existing connections replied/sent should also be capped. We will cap it.
 
 // Build complete metrics object for a week row including live-calculated rates
