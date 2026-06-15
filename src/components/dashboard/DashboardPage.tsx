@@ -1454,19 +1454,37 @@ export function DashboardPage() {
                           />
                         </div>
                         <Card className="border shadow-sm p-6 bg-card">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-4 border-b pb-2">Cold Emailing</p>
+                          <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-6">
+                            {[
+                              { label: 'Emails Sent', val: salesVal(salesData, 'cold_email', 'SO50') },
+                              { label: 'Replies', val: salesVal(salesData, 'cold_email', 'SO51') },
+                              { label: 'Positive Replies', val: salesVal(salesData, 'cold_email', 'SO53') },
+                              { label: 'OOO Replies', val: salesVal(salesData, 'cold_email', 'SO55') },
+                            ].map((m, i) => (
+                              <div key={i} className="space-y-1">
+                                <p className="text-[10px] font-bold text-muted-foreground uppercase">{m.label}</p>
+                                <p className="text-lg font-black">{fmt(m.val, m.unit as any)}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </Card>
+                        <Card className="border shadow-sm p-6 bg-card">
                           <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-4 border-b pb-2">Meeting Tracker</p>
                           <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-6">
                             {[
-                              { label: 'Via LinkedIn', val: salesVal(salesData, 'meeting_tracker', 'MT01') },
-                              { label: 'Via Cold Email', val: salesVal(salesData, 'meeting_tracker', 'MT02') },
-                              { label: 'Via Referral', val: salesVal(salesData, 'meeting_tracker', 'MT03') },
-                              { label: 'Total Booked', val: salesVal(salesData, 'meeting_tracker', 'MT05') },
-                              { label: 'Completed', val: salesVal(salesData, 'meeting_tracker', 'MT06') },
-                              { label: 'No-Shows', val: salesVal(salesData, 'meeting_tracker', 'MT07') },
-                              { label: 'Proposals', val: salesVal(salesData, 'meeting_tracker', 'MT09') },
-                              { label: 'Follow-ups', val: salesVal(salesData, 'meeting_tracker', 'MT10') },
-                              { label: 'Conversions', val: salesVal(salesData, 'meeting_tracker', 'MT11') },
-                              { label: 'Revenue', val: salesVal(salesData, 'meeting_tracker', 'MT12'), unit: '₹' },
+                              { label: 'Via LinkedIn', val: salesVal(salesData, 'meeting_tracker', 'SO36') },
+                              { label: 'Via Cold Email', val: salesVal(salesData, 'meeting_tracker', 'SO37') },
+                              { label: 'Via Referral', val: salesVal(salesData, 'meeting_tracker', 'SO38') },
+                              { label: 'Via Other', val: salesVal(salesData, 'meeting_tracker', 'SO39') },
+                              { label: 'Total Booked', val: salesVal(salesData, 'meeting_tracker', 'SO40') },
+                              { label: 'Completed', val: salesVal(salesData, 'meeting_tracker', 'SO41') },
+                              { label: 'No-Shows', val: salesVal(salesData, 'meeting_tracker', 'SO42') },
+                              { label: 'Proposals', val: salesVal(salesData, 'meeting_tracker', 'SO44') },
+                              { label: 'Follow-ups', val: salesVal(salesData, 'meeting_tracker', 'SO45') },
+                              { label: 'Conversions', val: salesVal(salesData, 'meeting_tracker', 'SO46') },
+                              { label: 'Avg Deal Size', val: salesVal(salesData, 'meeting_tracker', 'SO48'), unit: '₹' },
+                              { label: 'Revenue Closed', val: salesVal(salesData, 'meeting_tracker', 'SO49'), unit: '₹' },
                             ].map((m, i) => (
                               <div key={i} className="space-y-1">
                                 <p className="text-[10px] font-bold text-muted-foreground uppercase">{m.label}</p>
