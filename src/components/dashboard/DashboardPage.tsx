@@ -318,7 +318,7 @@ export function DashboardPage() {
     return (
     <div className="overflow-x-auto">
       <Table>
-        <TableHeader className="bg-muted/30">
+        <TableHeader className="bg-muted/30 sticky top-0 z-10">
           <TableRow>
             <TableHead className="text-[10px] font-black uppercase">Metric Name</TableHead>
             <TableHead className="text-[10px] font-black uppercase text-center">This Week</TableHead>
@@ -1226,7 +1226,7 @@ export function DashboardPage() {
                                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
                                   {/* Content Metrics */}
                                   <div className="space-y-4">
-                                    <div className="flex items-center gap-2 pb-2 border-b border-muted">
+                                    <div className="flex items-center gap-2 pb-2 border-b border-muted sticky top-0 bg-background z-20">
                                       <FileText className="w-4 h-4 text-gold" />
                                       <h4 className="text-xs font-black uppercase tracking-widest">Content Metrics</h4>
                                     </div>
@@ -1244,7 +1244,7 @@ export function DashboardPage() {
 
                                   {/* Lead Gen Metrics */}
                                   <div className="space-y-4">
-                                    <div className="flex items-center gap-2 pb-2 border-b border-muted">
+                                    <div className="flex items-center gap-2 pb-2 border-b border-muted sticky top-0 bg-background z-20">
                                       <Users className="w-4 h-4 text-gold" />
                                       <h4 className="text-xs font-black uppercase tracking-widest">Lead Gen Metrics</h4>
                                     </div>
