@@ -19,6 +19,9 @@ export async function backfillHighScores(clientId: string): Promise<void> {
   const best: Record<string, { value: number; week: string; name: string }> = {}
 
   for (const row of rows) {
+    // Skip month-aggregate import rows (week_start = 1st of month)
+    if (row.week_start && new Date(row.week_start).getUTCDate() === 1) continue
+
     const cm = row.content_metrics as Record<string, any> ?? {}
     const lm = row.leadgen_metrics as Record<string, any> ?? {}
     const weekStart = row.week_start
