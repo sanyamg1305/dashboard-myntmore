@@ -25,6 +25,7 @@ export const CONTENT_METRICS: Metric[] = [
   { id: 'C08', name: 'Videos Posted', type: 'number', category: 'content', group: 'Post Output', hasTarget: true, hasNote: false },
   { id: 'C09', name: 'Total Posts Posted', type: 'auto', category: 'content', group: 'Post Output', autoFormula: 'C06+C07+C08', dependsOn: ['C06','C07','C08'], hasTarget: true, hasNote: false },
   { id: 'C27', name: 'Video Views', type: 'number', category: 'content', group: 'Post Output', hasTarget: false, hasNote: false },
+  { id: 'C28', name: 'Newsletters Drafted', type: 'number', category: 'content', group: 'Post Output', hasTarget: true, hasNote: false },
   // Performance
   { id: 'C10', name: 'Impressions', type: 'number', category: 'content', group: 'Performance', hasTarget: true, hasNote: false },
   { id: 'C26', name: 'Avg Impressions Per Post', type: 'auto', category: 'content', group: 'Performance', autoFormula: 'C10/C09', dependsOn: ['C10','C09'], hasTarget: false, hasNote: false },
