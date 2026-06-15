@@ -1453,46 +1453,70 @@ export function DashboardPage() {
                             currentData={salesData.shirin_outreach} 
                           />
                         </div>
-                        <Card className="border shadow-sm p-6 bg-card">
-                          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-4 border-b pb-2">Cold Emailing</p>
-                          <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-6">
-                            {[
-                              { label: 'Emails Sent', val: salesVal(salesData, 'cold_email', 'SO50') },
-                              { label: 'Replies', val: salesVal(salesData, 'cold_email', 'SO51') },
-                              { label: 'Positive Replies', val: salesVal(salesData, 'cold_email', 'SO53') },
-                              { label: 'OOO Replies', val: salesVal(salesData, 'cold_email', 'SO55') },
-                            ].map((m, i) => (
-                              <div key={i} className="space-y-1">
-                                <p className="text-[10px] font-bold text-muted-foreground uppercase">{m.label}</p>
-                                <p className="text-lg font-black">{fmt(m.val, m.unit as any)}</p>
+                        {(() => {
+                          const ceS = salesData
+                          const so50 = salesVal(ceS, 'cold_email', 'SO50')
+                          const so51 = salesVal(ceS, 'cold_email', 'SO51')
+                          const so53 = salesVal(ceS, 'cold_email', 'SO53')
+                          const so55 = salesVal(ceS, 'cold_email', 'SO55')
+                          const replyRate = so50 && so50 > 0 && so51 !== null ? Math.round((so51 / so50) * 1000) / 10 : null
+                          const posReplyRate = so51 && so51 > 0 && so53 !== null ? Math.round((so53 / so51) * 1000) / 10 : null
+                          return (
+                            <Card className="border shadow-sm p-6 bg-card">
+                              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-4 border-b pb-2">Cold Emailing</p>
+                              <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-6">
+                                {[
+                                  { label: 'Emails Sent', val: so50, fmt: 'num' },
+                                  { label: 'Replies', val: so51, fmt: 'num' },
+                                  { label: 'Reply Rate', val: replyRate, fmt: 'pct' },
+                                  { label: 'Positive Replies', val: so53, fmt: 'num' },
+                                  { label: 'Positive Reply Rate', val: posReplyRate, fmt: 'pct' },
+                                  { label: 'OOO Replies', val: so55, fmt: 'num' },
+                                ].map((m, i) => (
+                                  <div key={i} className="space-y-1">
+                                    <p className="text-[10px] font-bold text-muted-foreground uppercase">{m.label}</p>
+                                    <p className="text-lg font-black">{m.val === null ? '—' : m.fmt === 'pct' ? `${m.val}%` : fmt(m.val)}</p>
+                                  </div>
+                                ))}
                               </div>
-                            ))}
-                          </div>
-                        </Card>
-                        <Card className="border shadow-sm p-6 bg-card">
-                          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-4 border-b pb-2">Meeting Tracker</p>
-                          <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-6">
-                            {[
-                              { label: 'Via LinkedIn', val: salesVal(salesData, 'meeting_tracker', 'SO36') },
-                              { label: 'Via Cold Email', val: salesVal(salesData, 'meeting_tracker', 'SO37') },
-                              { label: 'Via Referral', val: salesVal(salesData, 'meeting_tracker', 'SO38') },
-                              { label: 'Via Other', val: salesVal(salesData, 'meeting_tracker', 'SO39') },
-                              { label: 'Total Booked', val: salesVal(salesData, 'meeting_tracker', 'SO40') },
-                              { label: 'Completed', val: salesVal(salesData, 'meeting_tracker', 'SO41') },
-                              { label: 'No-Shows', val: salesVal(salesData, 'meeting_tracker', 'SO42') },
-                              { label: 'Proposals', val: salesVal(salesData, 'meeting_tracker', 'SO44') },
-                              { label: 'Follow-ups', val: salesVal(salesData, 'meeting_tracker', 'SO45') },
-                              { label: 'Conversions', val: salesVal(salesData, 'meeting_tracker', 'SO46') },
-                              { label: 'Avg Deal Size', val: salesVal(salesData, 'meeting_tracker', 'SO48'), unit: '₹' },
-                              { label: 'Revenue Closed', val: salesVal(salesData, 'meeting_tracker', 'SO49'), unit: '₹' },
-                            ].map((m, i) => (
-                              <div key={i} className="space-y-1">
-                                <p className="text-[10px] font-bold text-muted-foreground uppercase">{m.label}</p>
-                                <p className="text-lg font-black">{fmt(m.val, m.unit as any)}</p>
+                            </Card>
+                          )
+                        })()}
+                        {(() => {
+                          const mtS = salesData
+                          const so43 = salesVal(mtS, 'meeting_tracker', 'SO43')
+                          const so47 = salesVal(mtS, 'meeting_tracker', 'SO47')
+                          return (
+                            <Card className="border shadow-sm p-6 bg-card">
+                              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-4 border-b pb-2">Meeting Tracker</p>
+                              <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-6">
+                                {[
+                                  { label: 'Via LinkedIn', val: salesVal(mtS, 'meeting_tracker', 'SO36'), fmt: 'num' },
+                                  { label: 'Via Cold Email', val: salesVal(mtS, 'meeting_tracker', 'SO37'), fmt: 'num' },
+                                  { label: 'Via Referral', val: salesVal(mtS, 'meeting_tracker', 'SO38'), fmt: 'num' },
+                                  { label: 'Via Other', val: salesVal(mtS, 'meeting_tracker', 'SO39'), fmt: 'num' },
+                                  { label: 'Total Booked', val: salesVal(mtS, 'meeting_tracker', 'SO40'), fmt: 'num' },
+                                  { label: 'Completed', val: salesVal(mtS, 'meeting_tracker', 'SO41'), fmt: 'num' },
+                                  { label: 'Completion Rate', val: so43, fmt: 'pct' },
+                                  { label: 'No-Shows', val: salesVal(mtS, 'meeting_tracker', 'SO42'), fmt: 'num' },
+                                  { label: 'Proposals', val: salesVal(mtS, 'meeting_tracker', 'SO44'), fmt: 'num' },
+                                  { label: 'Follow-ups', val: salesVal(mtS, 'meeting_tracker', 'SO45'), fmt: 'num' },
+                                  { label: 'Conversions', val: salesVal(mtS, 'meeting_tracker', 'SO46'), fmt: 'num' },
+                                  { label: 'Conversion Rate', val: so47, fmt: 'pct' },
+                                  { label: 'Avg Deal Size', val: salesVal(mtS, 'meeting_tracker', 'SO48'), fmt: 'inr' },
+                                  { label: 'Revenue Closed', val: salesVal(mtS, 'meeting_tracker', 'SO49'), fmt: 'inr' },
+                                ].map((m, i) => (
+                                  <div key={i} className="space-y-1">
+                                    <p className="text-[10px] font-bold text-muted-foreground uppercase">{m.label}</p>
+                                    <p className="text-lg font-black">
+                                      {m.val === null ? '—' : m.fmt === 'pct' ? `${m.val}%` : m.fmt === 'inr' ? fmt(m.val, '₹') : fmt(m.val)}
+                                    </p>
+                                  </div>
+                                ))}
                               </div>
-                            ))}
-                          </div>
-                        </Card>
+                            </Card>
+                          )
+                        })()}
                       </>
                     ) : (
                       <Card className="border border-dashed py-10 flex flex-col items-center justify-center bg-muted/5">
