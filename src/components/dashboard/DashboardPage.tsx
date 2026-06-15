@@ -323,7 +323,6 @@ export function DashboardPage() {
             <TableHead className="text-[10px] font-black uppercase">Metric Name</TableHead>
             <TableHead className="text-[10px] font-black uppercase text-center">This Week</TableHead>
             <TableHead className="text-[10px] font-black uppercase text-center">Prev Week</TableHead>
-            <TableHead className="text-[10px] font-black uppercase text-center">vs Target</TableHead>
             <TableHead className="text-[10px] font-black uppercase text-center">Target</TableHead>
             <TableHead className="text-[10px] font-black uppercase text-center">Wk Ach%</TableHead>
             <TableHead className="text-[10px] font-black uppercase text-center text-blue-600">Mo Ach%</TableHead>
@@ -371,7 +370,7 @@ export function DashboardPage() {
               <TableRow key={m.id} className="h-8">
                 <TableCell className="py-1 text-xs font-medium">{m.name}</TableCell>
                 {m.type === 'textarea' ? (
-                  <TableCell colSpan={7} className="py-1 text-left">
+                  <TableCell colSpan={6} className="py-1 text-left">
                     {current ? (
                       <button
                         className="text-left w-full"
@@ -405,9 +404,6 @@ export function DashboardPage() {
                     </TableCell>
                     <TableCell className="py-1 text-center text-xs text-muted-foreground">
                       {['L12', 'L14', 'L17'].includes(m.id) ? formatPct(prev as number) : formatDashboardValue(prev, m.id)}
-                    </TableCell>
-                    <TableCell className="py-1 text-center text-xs font-bold" style={{ color: fmtDelta(current as any, target as any).color }}>
-                      {target !== null ? fmtDelta(current as any, target as any).text : '—'}
                     </TableCell>
                     <TableCell className="py-1 text-center text-xs text-muted-foreground">{formatMetricValue(target, m.id)}</TableCell>
                     <TableCell className={cn("py-1 text-center text-xs font-black rounded", achColor(achNum), achBg(achNum))}>{ach}</TableCell>
