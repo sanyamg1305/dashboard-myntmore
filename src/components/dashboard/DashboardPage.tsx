@@ -314,6 +314,7 @@ export function DashboardPage() {
   }) => {
     const currentBuilt = buildWeekMetrics(currentData)
     const prevBuilt = buildWeekMetrics(prevData)
+    const [expandedTextareas, setExpandedTextareas] = React.useState<Set<string>>(new Set())
     return (
     <div className="overflow-x-auto">
       <Table>
@@ -370,12 +371,29 @@ export function DashboardPage() {
               <TableRow key={m.id} className="h-8">
                 <TableCell className="py-1 text-xs font-medium">{m.name}</TableCell>
                 {m.type === 'textarea' ? (
-                  <TableCell
-                    colSpan={7}
-                    className="py-1 text-left"
-                    style={{ fontSize: '12px', color: '#666', fontStyle: 'italic' }}
-                  >
-                    {current ? `"${String(current).slice(0, 100)}${String(current).length > 100 ? '...' : ''}"` : '—'}
+                  <TableCell colSpan={7} className="py-1 text-left">
+                    {current ? (
+                      <button
+                        className="text-left w-full"
+                        onClick={() => {
+                          const next = new Set(expandedTextareas)
+                          if (next.has(m.id)) next.delete(m.id)
+                          else next.add(m.id)
+                          setExpandedTextareas(next)
+                        }}
+                      >
+                        <span className="text-[11px] italic text-foreground/70 leading-relaxed">
+                          {expandedTextareas.has(m.id)
+                            ? String(current)
+                            : `"${String(current).slice(0, 80)}${String(current).length > 80 ? '…"' : '"'}`}
+                        </span>
+                        <span className="ml-1 text-[9px] font-bold uppercase text-muted-foreground">
+                          {expandedTextareas.has(m.id) ? '▲ less' : String(current).length > 80 ? '▼ more' : ''}
+                        </span>
+                      </button>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">—</span>
+                    )}
                   </TableCell>
                 ) : (
                   <>
