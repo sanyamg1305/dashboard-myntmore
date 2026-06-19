@@ -22,7 +22,7 @@ do $$
 declare
   t text;
 begin
-  foreach t in array array['weekly_data','campaigns','campaign_weekly_data','high_scores','targets','hot_leads','actionables']
+  foreach t in array array['weekly_data','campaigns','campaign_weekly_data','high_scores','targets','actionables']
   loop
     execute format('alter table public.%I enable row level security', t);
 
@@ -62,7 +62,7 @@ begin
     'myntmore_processes','process_weekly_updates','invites','profiles',
     'user_roles','client_assignments','client_context_notes','client_settings',
     'client_alerts','client_notifications','client_health_scores',
-    'tj_channel_assignments'
+    'tj_channel_assignments','hot_leads','initiatives'
   ]
   loop
     execute format('alter table public.%I enable row level security', t);
