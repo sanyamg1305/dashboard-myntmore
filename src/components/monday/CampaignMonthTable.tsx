@@ -2,11 +2,12 @@ import React, { useState } from 'react'
 import { calcRateCapped, fmtRate, fmt } from '../../utils/readMetric'
 import { EditCampaignWeekModal } from './EditCampaignWeekModal'
 
-export function CampaignMonthTable({ campaign, monthWeeks, onEdit, onWeekSaved }: {
+export function CampaignMonthTable({ campaign, monthWeeks, onEdit, onWeekSaved, readOnly = false }: {
   campaign: any,
   monthWeeks: any[],
-  onEdit: (c: any) => void,
+  onEdit?: (c: any) => void,
   onWeekSaved?: () => void,
+  readOnly?: boolean,
 }) {
   const [open, setOpen] = useState(true)
   const [editingWeek, setEditingWeek] = useState<{ weekStart: string; weekLabel: string; weekData: any } | null>(null)
@@ -69,15 +70,17 @@ export function CampaignMonthTable({ campaign, monthWeeks, onEdit, onWeekSaved }
             </span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <button
-              onClick={e => { e.stopPropagation(); onEdit(campaign) }}
-              style={{
-                background: 'white', border: '1px solid #E5E5E5', borderRadius: '6px',
-                padding: '3px 10px', fontSize: '11px', fontWeight: '600', cursor: 'pointer',
-              }}
-            >
-              ✏️ Edit Campaign
-            </button>
+            {!readOnly && (
+              <button
+                onClick={e => { e.stopPropagation(); onEdit?.(campaign) }}
+                style={{
+                  background: 'white', border: '1px solid #E5E5E5', borderRadius: '6px',
+                  padding: '3px 10px', fontSize: '11px', fontWeight: '600', cursor: 'pointer',
+                }}
+              >
+                ✏️ Edit Campaign
+              </button>
+            )}
             <span style={{ color: '#999', fontSize: '12px' }}>{open ? '▲' : '▼'}</span>
           </div>
         </div>
@@ -100,20 +103,22 @@ export function CampaignMonthTable({ campaign, monthWeeks, onEdit, onWeekSaved }
                       whiteSpace: 'nowrap',
                     }}>
                       <div>{w.shortLabel}</div>
-                      <button
-                        onClick={e => {
-                          e.stopPropagation()
-                          setEditingWeek({ weekStart: w.weekStart, weekLabel: w.shortLabel, weekData: campaign.byWeek[w.weekStart] ?? null })
-                        }}
-                        title="Edit this week's data"
-                        style={{
-                          marginTop: '4px', background: 'white', border: '1px solid #E5E5E5',
-                          borderRadius: '4px', padding: '1px 6px', fontSize: '10px',
-                          cursor: 'pointer', color: '#666', fontWeight: '600',
-                        }}
-                      >
-                        ✏️
-                      </button>
+                      {!readOnly && (
+                        <button
+                          onClick={e => {
+                            e.stopPropagation()
+                            setEditingWeek({ weekStart: w.weekStart, weekLabel: w.shortLabel, weekData: campaign.byWeek[w.weekStart] ?? null })
+                          }}
+                          title="Edit this week's data"
+                          style={{
+                            marginTop: '4px', background: 'white', border: '1px solid #E5E5E5',
+                            borderRadius: '4px', padding: '1px 6px', fontSize: '10px',
+                            cursor: 'pointer', color: '#666', fontWeight: '600',
+                          }}
+                        >
+                          ✏️
+                        </button>
+                      )}
                     </th>
                   ))}
                 </tr>
