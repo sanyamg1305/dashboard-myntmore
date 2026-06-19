@@ -4,7 +4,8 @@ import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/lib/auth'
 import { buildWeekMetrics, formatPct } from '@/utils/metricCalculations'
 import { CONTENT_METRICS, LEADGEN_METRICS } from '@/data/metrics'
-import { getWeekOptions, getCurrentWeekStart } from '@/utils/weekUtils'
+import { getWeekOptions, getCurrentWeekStart, getWeeksInSameMonth } from '@/utils/weekUtils'
+import { CampaignMonthTable } from '@/components/monday/CampaignMonthTable'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -61,11 +62,13 @@ export function ClientPortalPage() {
   const navigate = useNavigate()
   const weekOptions = useMemo(() => getWeekOptions(12), [])
   const [selectedWeek, setSelectedWeek] = useState(getCurrentWeekStart())
-  const [activeTab, setActiveTab] = useState<'overview' | 'content' | 'leadgen' | 'trends'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'content' | 'leadgen' | 'campaigns' | 'trends'>('overview')
   const [currentData, setCurrentData] = useState<any>(null)
   const [prevData, setPrevData] = useState<any>(null)
   const [historyData, setHistoryData] = useState<any[]>([])
+  const [campaigns, setCampaigns] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const monthWeeks = useMemo(() => getWeeksInSameMonth(selectedWeek), [selectedWeek])
 
   // Redirect non-clients away
   useEffect(() => {
@@ -77,7 +80,39 @@ export function ClientPortalPage() {
   useEffect(() => {
     if (!clientRecord) return
     fetchData()
+    fetchCampaigns()
   }, [clientRecord, selectedWeek])
+
+  const fetchCampaigns = async () => {
+    if (!clientRecord) return
+    const { data } = await supabase
+      .from('campaigns')
+      .select('*')
+      .eq('client_id', clientRecord.id)
+      .order('created_at', { ascending: true })
+
+    if (!data || data.length === 0) {
+      setCampaigns([])
+      return
+    }
+
+    const weekStarts = monthWeeks.map((w: any) => w.weekStart)
+    const { data: cdata } = await supabase
+      .from('campaign_weekly_data')
+      .select('*')
+      .in('campaign_id', data.map(c => c.id))
+      .in('week_start', weekStarts)
+
+    const enriched = data.map(c => {
+      const byWeek: Record<string, any> = {}
+      cdata?.filter(r => r.campaign_id === c.id).forEach(r => {
+        byWeek[r.week_start] = r
+      })
+      return { ...c, byWeek }
+    })
+
+    setCampaigns(enriched)
+  }
 
   const fetchData = async () => {
     if (!clientRecord) return
@@ -144,6 +179,7 @@ export function ClientPortalPage() {
     { id: 'overview', label: 'Overview' },
     { id: 'content', label: 'Content' },
     { id: 'leadgen', label: 'Lead Gen' },
+    { id: 'campaigns', label: 'Campaigns' },
     { id: 'trends', label: 'Trends' },
   ] as const
 
@@ -379,6 +415,28 @@ export function ClientPortalPage() {
                       })}
                     </TableBody>
                   </Table>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* CAMPAIGNS TAB */}
+            {activeTab === 'campaigns' && (
+              <Card className="bg-white border shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-sm font-black uppercase tracking-wider flex items-center gap-2">
+                    <Users className="w-4 h-4 text-gold" /> Your Campaigns
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {campaigns.length === 0 ? (
+                    <p className="text-sm text-muted-foreground py-6 text-center">No campaigns yet.</p>
+                  ) : (
+                    <div className="space-y-4">
+                      {campaigns.map(c => (
+                        <CampaignMonthTable key={c.id} campaign={c} monthWeeks={monthWeeks} readOnly />
+                      ))}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )}
