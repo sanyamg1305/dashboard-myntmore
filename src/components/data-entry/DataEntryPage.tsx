@@ -457,36 +457,63 @@ export function DataEntryPage() {
     // Existing Connections State
     const [existingConnSent, setExistingConnSent] = useState<string>('')
     const [existingConnReplied, setExistingConnReplied] = useState<string>('')
+    const [existingConnHotLeads, setExistingConnHotLeads] = useState<string>('')
     const [existingConnNotes, setExistingConnNotes] = useState<string>('')
     const [existingConnSaveStatus, setExistingConnSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
     const existingConnTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null)
-    const existingConnRef = React.useRef({ sent: existingConnSent, replied: existingConnReplied, notes: existingConnNotes })
-    
+    const existingConnRef = React.useRef({ sent: existingConnSent, replied: existingConnReplied, hotLeads: existingConnHotLeads, notes: existingConnNotes })
+
     useEffect(() => {
-        existingConnRef.current = { sent: existingConnSent, replied: existingConnReplied, notes: existingConnNotes }
-    }, [existingConnSent, existingConnReplied, existingConnNotes])
+        existingConnRef.current = { sent: existingConnSent, replied: existingConnReplied, hotLeads: existingConnHotLeads, notes: existingConnNotes }
+    }, [existingConnSent, existingConnReplied, existingConnHotLeads, existingConnNotes])
 
     useEffect(() => {
         const lm = weeklyData?.leadgen_metrics as any
         setExistingConnSent(lm?.L19?.value ?? '')
         setExistingConnReplied(lm?.L20?.value ?? '')
+        setExistingConnHotLeads(lm?.L22?.value ?? '')
         setExistingConnNotes(lm?.L28?.value ?? '')
+    }, [weeklyData])
+
+    // InMail Outreach State
+    const [inmailTargeted, setInmailTargeted] = useState<string>('')
+    const [inmailSent, setInmailSent] = useState<string>('')
+    const [inmailAccepted, setInmailAccepted] = useState<string>('')
+    const [inmailDeclined, setInmailDeclined] = useState<string>('')
+    const [inmailHotLeads, setInmailHotLeads] = useState<string>('')
+    const [inmailSaveStatus, setInmailSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+    const inmailTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+    const inmailRef = React.useRef({ targeted: inmailTargeted, sent: inmailSent, accepted: inmailAccepted, declined: inmailDeclined, hotLeads: inmailHotLeads })
+
+    useEffect(() => {
+        inmailRef.current = { targeted: inmailTargeted, sent: inmailSent, accepted: inmailAccepted, declined: inmailDeclined, hotLeads: inmailHotLeads }
+    }, [inmailTargeted, inmailSent, inmailAccepted, inmailDeclined, inmailHotLeads])
+
+    useEffect(() => {
+        const lm = weeklyData?.leadgen_metrics as any
+        setInmailTargeted(lm?.L01?.value ?? '')
+        setInmailSent(lm?.L02?.value ?? '')
+        setInmailAccepted(lm?.L03?.value ?? '')
+        setInmailDeclined(lm?.L04?.value ?? '')
+        setInmailHotLeads(lm?.L06?.value ?? '')
     }, [weeklyData])
 
     // Reset campaign save states when client or week changes
     useEffect(() => {
       setExistingConnSaveStatus('idle')
+      setInmailSaveStatus('idle')
       setSaveStatus({})
     }, [selectedClientId, selectedWeek])
 
-    const handleExistingConnChange = (field: 'sent'|'replied'|'notes', val: string) => {
+    const handleExistingConnChange = (field: 'sent'|'replied'|'hotLeads'|'notes', val: string) => {
         if (field === 'sent') setExistingConnSent(val)
         if (field === 'replied') setExistingConnReplied(val)
+        if (field === 'hotLeads') setExistingConnHotLeads(val)
         if (field === 'notes') setExistingConnNotes(val)
 
         if (existingConnTimer.current) clearTimeout(existingConnTimer.current)
         setExistingConnSaveStatus('saving')
-        
+
         existingConnTimer.current = setTimeout(async () => {
             try {
                 const current = existingConnRef.current
@@ -502,6 +529,7 @@ export function DataEntryPage() {
                     ...currentMetrics,
                     L19: { value: current.sent === '' ? 0 : Number(current.sent) },
                     L20: { value: current.replied === '' ? 0 : Number(current.replied) },
+                    L22: { value: current.hotLeads === '' ? 0 : Number(current.hotLeads) },
                     L28: { value: current.notes || '' },
                 }
 
@@ -515,10 +543,58 @@ export function DataEntryPage() {
                         week_label: weekInfo?.label ?? '',
                         leadgen_metrics: updatedMetrics,
                     }, { onConflict: 'client_id,week_start' })
-                
+
                 setExistingConnSaveStatus('saved')
             } catch (err) {
                 setExistingConnSaveStatus('error')
+            }
+        }, 2000)
+    }
+
+    const handleInmailChange = (field: 'targeted'|'sent'|'accepted'|'declined'|'hotLeads', val: string) => {
+        if (field === 'targeted') setInmailTargeted(val)
+        if (field === 'sent') setInmailSent(val)
+        if (field === 'accepted') setInmailAccepted(val)
+        if (field === 'declined') setInmailDeclined(val)
+        if (field === 'hotLeads') setInmailHotLeads(val)
+
+        if (inmailTimer.current) clearTimeout(inmailTimer.current)
+        setInmailSaveStatus('saving')
+
+        inmailTimer.current = setTimeout(async () => {
+            try {
+                const current = inmailRef.current
+                const { data: existing } = await supabase
+                    .from('weekly_data')
+                    .select('leadgen_metrics')
+                    .eq('client_id', selectedClientId as string)
+                    .eq('week_start', selectedWeek)
+                    .maybeSingle()
+
+                const currentMetrics = (existing?.leadgen_metrics as any) ?? {}
+                const updatedMetrics = {
+                    ...currentMetrics,
+                    L01: { value: current.targeted || '' },
+                    L02: { value: current.sent === '' ? 0 : Number(current.sent) },
+                    L03: { value: current.accepted === '' ? 0 : Number(current.accepted) },
+                    L04: { value: current.declined === '' ? 0 : Number(current.declined) },
+                    L06: { value: current.hotLeads === '' ? 0 : Number(current.hotLeads) },
+                }
+
+                const weekInfo = weekOptions.find(w => w.weekStart === selectedWeek)
+                await supabase
+                    .from('weekly_data')
+                    .upsert({
+                        client_id: selectedClientId as string,
+                        week_start: selectedWeek,
+                        week_end: weekInfo?.weekEnd ?? '',
+                        week_label: weekInfo?.label ?? '',
+                        leadgen_metrics: updatedMetrics,
+                    }, { onConflict: 'client_id,week_start' })
+
+                setInmailSaveStatus('saved')
+            } catch (err) {
+                setInmailSaveStatus('error')
             }
         }, 2000)
     }
@@ -799,6 +875,7 @@ export function DataEntryPage() {
     }
 
     const existingRespRate = fmtRate(calcRateCapped(Number(existingConnReplied), Number(existingConnSent)))
+    const inmailAcceptRate = fmtRate(calcRateCapped(Number(inmailAccepted), Number(inmailSent)))
 
     return (
         <div className="space-y-6">
@@ -821,21 +898,31 @@ export function DataEntryPage() {
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <Label className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">Messages Sent</Label>
-                                    <Input 
-                                        type="number" 
-                                        placeholder="—" 
-                                        value={existingConnSent} 
-                                        onChange={(e) => handleExistingConnChange('sent', e.target.value)} 
+                                    <Input
+                                        type="number"
+                                        placeholder="—"
+                                        value={existingConnSent}
+                                        onChange={(e) => handleExistingConnChange('sent', e.target.value)}
                                         className="h-10"
                                     />
                                 </div>
                                 <div className="space-y-2">
                                     <Label className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">Replies</Label>
-                                    <Input 
-                                        type="number" 
-                                        placeholder="—" 
-                                        value={existingConnReplied} 
-                                        onChange={(e) => handleExistingConnChange('replied', e.target.value)} 
+                                    <Input
+                                        type="number"
+                                        placeholder="—"
+                                        value={existingConnReplied}
+                                        onChange={(e) => handleExistingConnChange('replied', e.target.value)}
+                                        className="h-10"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">Existing Connections Hot Leads</Label>
+                                    <Input
+                                        type="number"
+                                        placeholder="—"
+                                        value={existingConnHotLeads}
+                                        onChange={(e) => handleExistingConnChange('hotLeads', e.target.value)}
                                         className="h-10"
                                     />
                                 </div>
@@ -850,6 +937,81 @@ export function DataEntryPage() {
                                 placeholder="Notes about existing connections outreach..." 
                                 value={existingConnNotes} 
                                 onChange={(e: any) => handleExistingConnChange('notes', e.target.value)}
+                                className="h-[120px] resize-none"
+                            />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* INMAIL OUTREACH */}
+            <div className="bg-white border rounded-xl shadow-sm overflow-hidden mb-8">
+                <div className="px-6 py-4 border-b bg-muted/10 flex justify-between items-center">
+                    <div>
+                        <h3 className="font-bold text-lg uppercase tracking-tight">InMail Outreach</h3>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">Client Level Outreach</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        {inmailSaveStatus === 'saving' && <span className="text-xs text-muted-foreground">Saving…</span>}
+                        {inmailSaveStatus === 'saved' && <span className="text-xs text-green-600 font-bold">✓ Saved</span>}
+                        {inmailSaveStatus === 'error' && <span className="text-xs text-red-600 font-bold">⚠ Error</span>}
+                    </div>
+                </div>
+                <div className="p-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div className="space-y-6">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <Label className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">InMails Sent</Label>
+                                    <Input
+                                        type="number"
+                                        placeholder="—"
+                                        value={inmailSent}
+                                        onChange={(e) => handleInmailChange('sent', e.target.value)}
+                                        className="h-10"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">InMails Accepted</Label>
+                                    <Input
+                                        type="number"
+                                        placeholder="—"
+                                        value={inmailAccepted}
+                                        onChange={(e) => handleInmailChange('accepted', e.target.value)}
+                                        className="h-10"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">InMails Declined</Label>
+                                    <Input
+                                        type="number"
+                                        placeholder="—"
+                                        value={inmailDeclined}
+                                        onChange={(e) => handleInmailChange('declined', e.target.value)}
+                                        className="h-10"
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">InMail Hot Leads</Label>
+                                    <Input
+                                        type="number"
+                                        placeholder="—"
+                                        value={inmailHotLeads}
+                                        onChange={(e) => handleInmailChange('hotLeads', e.target.value)}
+                                        className="h-10"
+                                    />
+                                </div>
+                            </div>
+                            <div style={{ background: '#F9F9F9', border: '1px solid #E5E5E5', borderRadius: '8px', padding: '10px 14px', fontSize: '14px', color: '#666', fontStyle: 'italic' }}>
+                                Acceptance Rate: <strong style={{ color: '#000' }}>{inmailAcceptRate}</strong>
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">ICP Targeted</Label>
+                            <Textarea
+                                placeholder="Describe the ICP targeted for InMail outreach..."
+                                value={inmailTargeted}
+                                onChange={(e: any) => handleInmailChange('targeted', e.target.value)}
                                 className="h-[120px] resize-none"
                             />
                         </div>
