@@ -73,7 +73,7 @@ export function buildWeekMetrics(weekRow: any) {
         })
         // Safely evaluate the arithmetic expression
         formulaVal = Number(eval(expr))
-        val = isNaN(formulaVal) ? null : formulaVal
+        val = isFinite(formulaVal) ? formulaVal : null
       } catch {
         val = null
       }
