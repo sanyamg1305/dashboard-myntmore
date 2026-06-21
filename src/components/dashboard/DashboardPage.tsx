@@ -317,8 +317,17 @@ export function DashboardPage() {
     const [expandedTextareas, setExpandedTextareas] = React.useState<Set<string>>(new Set())
     return (
     <div className="overflow-x-auto">
+      <div className="flex items-center gap-3 px-1 py-1.5 text-[10px] font-semibold text-muted-foreground border-b mb-1">
+        <span className="uppercase tracking-wide">Ach% key:</span>
+        <span className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded-sm bg-green-100 border border-green-400"></span><span className="text-green-700">≥100% On target</span></span>
+        <span className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded-sm bg-yellow-100 border border-yellow-400"></span><span className="text-yellow-700">75–99% Close</span></span>
+        <span className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded-sm bg-orange-100 border border-orange-400"></span><span className="text-orange-600">50–74% Below</span></span>
+        <span className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded-sm bg-red-100 border border-red-400"></span><span className="text-red-600">&lt;50% Off track</span></span>
+        <span className="flex items-center gap-1 ml-2"><span className="text-yellow-500">★</span><span>New high</span></span>
+        <span className="flex items-center gap-1"><span style={{ color: '#B8860B' }} className="font-bold">■</span><span style={{ color: '#B8860B' }}>Best ever</span></span>
+      </div>
       <Table>
-        <TableHeader className="bg-muted/30">
+        <TableHeader className="bg-muted/30 sticky top-0 z-10">
           <TableRow>
             <TableHead className="text-[10px] font-black uppercase">Metric Name</TableHead>
             <TableHead className="text-[10px] font-black uppercase text-center">Current Week</TableHead>
@@ -349,14 +358,14 @@ export function DashboardPage() {
             }
 
             const achColor = (n: number | null) => n === null ? ''
-              : n >= 100 ? 'text-blue-600'
-              : n >= 75  ? 'text-green-600'
-              : n >= 50  ? 'text-amber-600'
+              : n >= 100 ? 'text-green-600'
+              : n >= 75  ? 'text-yellow-600'
+              : n >= 50  ? 'text-orange-500'
               : 'text-red-600'
             const achBg = (n: number | null) => n === null ? ''
-              : n >= 100 ? 'bg-blue-50'
-              : n >= 75  ? 'bg-green-50'
-              : n >= 50  ? 'bg-amber-50'
+              : n >= 100 ? 'bg-green-50'
+              : n >= 75  ? 'bg-yellow-50'
+              : n >= 50  ? 'bg-orange-50'
               : 'bg-red-50'
 
             const mtdVal = clientMtdTotals[m.id] ?? null
@@ -397,9 +406,9 @@ export function DashboardPage() {
                   </TableCell>
                 ) : (
                   <>
-                    <TableCell className={cn("py-1 text-center text-xs font-bold rounded", achColor(achNum))}>
+                    <TableCell className="py-1 text-center text-xs font-bold">
                       <span className="inline-flex items-center gap-1 justify-center">
-                        {isNewHigh && <span title="New high score! 👑" className="text-amber-400 text-sm leading-none">👑</span>}
+                        {isNewHigh && <span title="New high score!" className="text-yellow-500 text-sm leading-none">★</span>}
                         {['L12', 'L14', 'L17'].includes(m.id) ? formatPct(current as number) : formatDashboardValue(current, m.id)}
                       </span>
                     </TableCell>
@@ -419,7 +428,8 @@ export function DashboardPage() {
                       {moAch}
                     </TableCell>
                     <TableCell
-                      className="py-1 text-center text-xs font-bold text-amber-600 cursor-help"
+                      className="py-1 text-center text-xs font-bold cursor-help"
+                      style={{ color: bestEver !== null ? '#B8860B' : undefined }}
                       title={hs?.achieved_week ? `Achieved: w/c ${new Date(hs.achieved_week).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}` : undefined}
                     >
                       {bestEver !== null ? (['L12', 'L14', 'L17'].includes(m.id) ? formatPct(bestEver as number) : formatDashboardValue(bestEver, m.id)) : '—'}
@@ -732,7 +742,7 @@ export function DashboardPage() {
         supabase.from('high_scores').select('*'),
         supabase.from('weekly_data').select('week_start, week_label, content_metrics, leadgen_metrics, client_id, content_submitted_at, leadgen_submitted_at')
           .gte('week_start', weekStart.slice(0, 7) + '-01')
-          .lte('week_start', weekStart.slice(0, 7) + '-31')
+          .lte('week_start', (() => { const [y, m] = weekStart.slice(0, 7).split('-').map(Number); return new Date(y, m, 0).toISOString().split('T')[0] })())
           .order('week_start', { ascending: true }),
         supabase.from('myntmore_processes').select('*').eq('status', 'active').order('priority', { ascending: true }).order('created_at', { ascending: true }),
         supabase.from('process_weekly_updates').select('*, profiles(full_name)').eq('week_start', weekStart)
@@ -1236,7 +1246,7 @@ export function DashboardPage() {
                                 <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
                                   {/* Content Metrics */}
                                   <div className="space-y-4">
-                                    <div className="flex items-center gap-2 pb-2 border-b border-muted">
+                                    <div className="flex items-center gap-2 pb-2 border-b border-muted sticky top-0 bg-background z-20">
                                       <FileText className="w-4 h-4 text-gold" />
                                       <h4 className="text-xs font-black uppercase tracking-widest">Content Metrics</h4>
                                     </div>
@@ -1254,7 +1264,7 @@ export function DashboardPage() {
 
                                   {/* Lead Gen Metrics */}
                                   <div className="space-y-4">
-                                    <div className="flex items-center gap-2 pb-2 border-b border-muted">
+                                    <div className="flex items-center gap-2 pb-2 border-b border-muted sticky top-0 bg-background z-20">
                                       <Users className="w-4 h-4 text-gold" />
                                       <h4 className="text-xs font-black uppercase tracking-widest">Lead Gen Metrics</h4>
                                     </div>
@@ -1457,28 +1467,70 @@ export function DashboardPage() {
                             currentData={salesData.shirin_outreach} 
                           />
                         </div>
-                        <Card className="border shadow-sm p-6 bg-card">
-                          <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-4 border-b pb-2">Meeting Tracker</p>
-                          <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-6">
-                            {[
-                              { label: 'Via LinkedIn', val: salesVal(salesData, 'meeting_tracker', 'MT01') },
-                              { label: 'Via Cold Email', val: salesVal(salesData, 'meeting_tracker', 'MT02') },
-                              { label: 'Via Referral', val: salesVal(salesData, 'meeting_tracker', 'MT03') },
-                              { label: 'Total Booked', val: salesVal(salesData, 'meeting_tracker', 'MT05') },
-                              { label: 'Completed', val: salesVal(salesData, 'meeting_tracker', 'MT06') },
-                              { label: 'No-Shows', val: salesVal(salesData, 'meeting_tracker', 'MT07') },
-                              { label: 'Proposals', val: salesVal(salesData, 'meeting_tracker', 'MT09') },
-                              { label: 'Follow-ups', val: salesVal(salesData, 'meeting_tracker', 'MT10') },
-                              { label: 'Conversions', val: salesVal(salesData, 'meeting_tracker', 'MT11') },
-                              { label: 'Revenue', val: salesVal(salesData, 'meeting_tracker', 'MT12'), unit: '₹' },
-                            ].map((m, i) => (
-                              <div key={i} className="space-y-1">
-                                <p className="text-[10px] font-bold text-muted-foreground uppercase">{m.label}</p>
-                                <p className="text-lg font-black">{fmt(m.val, m.unit as any)}</p>
+                        {(() => {
+                          const ceS = salesData
+                          const so50 = salesVal(ceS, 'cold_email', 'SO50')
+                          const so51 = salesVal(ceS, 'cold_email', 'SO51')
+                          const so53 = salesVal(ceS, 'cold_email', 'SO53')
+                          const so55 = salesVal(ceS, 'cold_email', 'SO55')
+                          const replyRate = so50 && so50 > 0 && so51 !== null ? Math.round((so51 / so50) * 1000) / 10 : null
+                          const posReplyRate = so51 && so51 > 0 && so53 !== null ? Math.round((so53 / so51) * 1000) / 10 : null
+                          return (
+                            <Card className="border shadow-sm p-6 bg-card">
+                              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-4 border-b pb-2">Cold Emailing</p>
+                              <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-6">
+                                {[
+                                  { label: 'Emails Sent', val: so50, fmt: 'num' },
+                                  { label: 'Replies', val: so51, fmt: 'num' },
+                                  { label: 'Reply Rate', val: replyRate, fmt: 'pct' },
+                                  { label: 'Positive Replies', val: so53, fmt: 'num' },
+                                  { label: 'Positive Reply Rate', val: posReplyRate, fmt: 'pct' },
+                                  { label: 'OOO Replies', val: so55, fmt: 'num' },
+                                ].map((m, i) => (
+                                  <div key={i} className="space-y-1">
+                                    <p className="text-[10px] font-bold text-muted-foreground uppercase">{m.label}</p>
+                                    <p className="text-lg font-black">{m.val === null ? '—' : m.fmt === 'pct' ? `${m.val}%` : fmt(m.val)}</p>
+                                  </div>
+                                ))}
                               </div>
-                            ))}
-                          </div>
-                        </Card>
+                            </Card>
+                          )
+                        })()}
+                        {(() => {
+                          const mtS = salesData
+                          const so43 = salesVal(mtS, 'meeting_tracker', 'SO43')
+                          const so47 = salesVal(mtS, 'meeting_tracker', 'SO47')
+                          return (
+                            <Card className="border shadow-sm p-6 bg-card">
+                              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-4 border-b pb-2">Meeting Tracker</p>
+                              <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-6 gap-6">
+                                {[
+                                  { label: 'Via LinkedIn', val: salesVal(mtS, 'meeting_tracker', 'SO36'), fmt: 'num' },
+                                  { label: 'Via Cold Email', val: salesVal(mtS, 'meeting_tracker', 'SO37'), fmt: 'num' },
+                                  { label: 'Via Referral', val: salesVal(mtS, 'meeting_tracker', 'SO38'), fmt: 'num' },
+                                  { label: 'Via Other', val: salesVal(mtS, 'meeting_tracker', 'SO39'), fmt: 'num' },
+                                  { label: 'Total Booked', val: salesVal(mtS, 'meeting_tracker', 'SO40'), fmt: 'num' },
+                                  { label: 'Completed', val: salesVal(mtS, 'meeting_tracker', 'SO41'), fmt: 'num' },
+                                  { label: 'Completion Rate', val: so43, fmt: 'pct' },
+                                  { label: 'No-Shows', val: salesVal(mtS, 'meeting_tracker', 'SO42'), fmt: 'num' },
+                                  { label: 'Proposals', val: salesVal(mtS, 'meeting_tracker', 'SO44'), fmt: 'num' },
+                                  { label: 'Follow-ups', val: salesVal(mtS, 'meeting_tracker', 'SO45'), fmt: 'num' },
+                                  { label: 'Conversions', val: salesVal(mtS, 'meeting_tracker', 'SO46'), fmt: 'num' },
+                                  { label: 'Conversion Rate', val: so47, fmt: 'pct' },
+                                  { label: 'Avg Deal Size', val: salesVal(mtS, 'meeting_tracker', 'SO48'), fmt: 'inr' },
+                                  { label: 'Revenue Closed', val: salesVal(mtS, 'meeting_tracker', 'SO49'), fmt: 'inr' },
+                                ].map((m, i) => (
+                                  <div key={i} className="space-y-1">
+                                    <p className="text-[10px] font-bold text-muted-foreground uppercase">{m.label}</p>
+                                    <p className="text-lg font-black">
+                                      {m.val === null ? '—' : m.fmt === 'pct' ? `${m.val}%` : m.fmt === 'inr' ? fmt(m.val, '₹') : fmt(m.val)}
+                                    </p>
+                                  </div>
+                                ))}
+                              </div>
+                            </Card>
+                          )
+                        })()}
                       </>
                     ) : (
                       <Card className="border border-dashed py-10 flex flex-col items-center justify-center bg-muted/5">
