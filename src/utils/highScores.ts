@@ -140,9 +140,9 @@ export async function detectAndUpdateHighScores(
   const L13 = readNum(leadgenMetrics, 'L13')
   const L15 = readNum(leadgenMetrics, 'L15')
 
-  const accRate = calcAcceptanceRate(L10, L11)
-  const respRate = calcResponseRate(L11, L13)
-  const posRate = calcPositiveRate(L13, L15)
+  const accRate = calcAcceptanceRate(L11, L10)
+  const respRate = calcResponseRate(L13, L11)
+  const posRate = calcPositiveRate(L15, L13)
 
   if (accRate && accRate > 0) values['L12'] = { value: accRate, name: 'Acceptance Rate' }
   if (respRate && respRate > 0) values['L14'] = { value: respRate, name: 'Response Rate' }
