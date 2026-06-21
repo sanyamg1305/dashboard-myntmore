@@ -91,7 +91,6 @@ const TRACKED_METRICS = [
   { id: 'C13', name: 'Engagement Total', category: 'content' },
   { id: 'C14', name: 'Profile Views', category: 'content' },
   { id: 'C15', name: 'New Followers', category: 'content' },
-  { id: 'C16', name: 'Total Follower Count', category: 'content' },
   { id: 'C17', name: 'Engagement on Other Profiles', category: 'content' },
   { id: 'C26', name: 'Avg Impressions Per Post', category: 'content' },
   { id: 'C27', name: 'Video Views', category: 'content' },
