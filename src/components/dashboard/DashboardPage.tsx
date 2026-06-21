@@ -1333,6 +1333,37 @@ export function DashboardPage() {
                                     </div>
                                   </div>
                                   </div>
+
+                                  {/* Weekly Summary Footer */}
+                                  {(() => {
+                                    const weekBuilt = buildWeekMetrics(currentData) as Record<string, any> | null
+                                    const totalPosts = weekBuilt?.C09 ?? null
+                                    const totalConnReq = weekBuilt?.L10 ?? null
+                                    const onTrack = score === '-' ? null : Number(score) >= 75 ? 'on' : Number(score) >= 50 ? 'risk' : 'off'
+                                    return (
+                                      <div className="mt-8 flex items-center justify-between gap-4 rounded-lg border bg-muted/20 px-5 py-3">
+                                        <div className="flex items-center gap-8">
+                                          <div>
+                                            <p className="text-[9px] font-black uppercase text-muted-foreground mb-0.5">Total Posts This Week</p>
+                                            <p className="text-lg font-black">{formatDashboardValue(totalPosts, 'C09')}</p>
+                                          </div>
+                                          <div>
+                                            <p className="text-[9px] font-black uppercase text-muted-foreground mb-0.5">Total Connection Requests Sent This Week</p>
+                                            <p className="text-lg font-black">{formatDashboardValue(totalConnReq, 'L10')}</p>
+                                          </div>
+                                        </div>
+                                        <Badge className={cn(
+                                          "font-black text-[11px] px-3 py-1",
+                                          onTrack === null ? "bg-muted text-muted-foreground" :
+                                          onTrack === 'on' ? "bg-status-on text-white" :
+                                          onTrack === 'risk' ? "bg-status-risk text-white" :
+                                          "bg-status-off text-white"
+                                        )}>
+                                          {onTrack === null ? 'No Data' : onTrack === 'on' ? '✅ On Track' : onTrack === 'risk' ? '⚠️ At Risk' : '🔴 Off Track'}
+                                        </Badge>
+                                      </div>
+                                    )
+                                  })()}
                                   </>
                                 )}
                             </div>
