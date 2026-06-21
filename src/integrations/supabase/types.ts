@@ -685,9 +685,11 @@ export type Database = {
       high_scores: {
         Row: {
           achieved_week: string | null
+          achieved_month: string | null
           client_id: string | null
           id: string
           lifetime_high: number | null
+          lifetime_high_month: number | null
           metric_id: string
           metric_name: string | null
           previous_high: number | null
@@ -695,9 +697,11 @@ export type Database = {
         }
         Insert: {
           achieved_week?: string | null
+          achieved_month?: string | null
           client_id?: string | null
           id?: string
           lifetime_high?: number | null
+          lifetime_high_month?: number | null
           metric_id: string
           metric_name?: string | null
           previous_high?: number | null
@@ -705,9 +709,11 @@ export type Database = {
         }
         Update: {
           achieved_week?: string | null
+          achieved_month?: string | null
           client_id?: string | null
           id?: string
           lifetime_high?: number | null
+          lifetime_high_month?: number | null
           metric_id?: string
           metric_name?: string | null
           previous_high?: number | null

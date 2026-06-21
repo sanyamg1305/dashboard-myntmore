@@ -321,13 +321,12 @@ export function DashboardPage() {
         <TableHeader className="bg-muted/30">
           <TableRow>
             <TableHead className="text-[10px] font-black uppercase">Metric Name</TableHead>
-            <TableHead className="text-[10px] font-black uppercase text-center">This Week</TableHead>
-            <TableHead className="text-[10px] font-black uppercase text-center">Prev Week</TableHead>
-            <TableHead className="text-[10px] font-black uppercase text-center">vs Target</TableHead>
-            <TableHead className="text-[10px] font-black uppercase text-center">Target</TableHead>
-            <TableHead className="text-[10px] font-black uppercase text-center">Wk Ach%</TableHead>
-            <TableHead className="text-[10px] font-black uppercase text-center text-blue-600">Mo Ach%</TableHead>
-            <TableHead className="text-[10px] font-black uppercase text-center text-amber-600">Best Ever</TableHead>
+            <TableHead className="text-[10px] font-black uppercase text-center">Current Week</TableHead>
+            <TableHead className="text-[10px] font-black uppercase text-center">Previous Week</TableHead>
+            <TableHead className="text-[10px] font-black uppercase text-center">Weekly Target Status</TableHead>
+            <TableHead className="text-[10px] font-black uppercase text-center text-blue-600">Monthly Target Status</TableHead>
+            <TableHead className="text-[10px] font-black uppercase text-center text-amber-600">Best Ever Week</TableHead>
+            <TableHead className="text-[10px] font-black uppercase text-center text-amber-600">Best Ever Month</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -338,6 +337,7 @@ export function DashboardPage() {
             const monthlyTarget = clientMonthlyTargets.find(t => t.metric_id === m.id)?.target_value ?? null
             const hs = clientHighScores.find(h => h.metric_id === m.id)
             const bestEver = hs?.lifetime_high ?? null
+            const bestEverMonth = hs?.lifetime_high_month ?? null
             const currentNum = current !== null && !isNaN(Number(current)) ? Number(current) : null
             const isNewHigh = currentNum !== null && currentNum > 0 && bestEver !== null && currentNum > Number(bestEver)
 
@@ -371,7 +371,7 @@ export function DashboardPage() {
               <TableRow key={m.id} className="h-8">
                 <TableCell className="py-1 text-xs font-medium">{m.name}</TableCell>
                 {m.type === 'textarea' ? (
-                  <TableCell colSpan={7} className="py-1 text-left">
+                  <TableCell colSpan={6} className="py-1 text-left">
                     {current ? (
                       <button
                         className="text-left w-full"
@@ -406,19 +406,29 @@ export function DashboardPage() {
                     <TableCell className="py-1 text-center text-xs text-muted-foreground">
                       {['L12', 'L14', 'L17'].includes(m.id) ? formatPct(prev as number) : formatDashboardValue(prev, m.id)}
                     </TableCell>
-                    <TableCell className="py-1 text-center text-xs font-bold" style={{ color: fmtDelta(current as any, target as any).color }}>
-                      {target !== null ? fmtDelta(current as any, target as any).text : '—'}
+                    <TableCell
+                      className={cn("py-1 text-center text-xs font-black rounded", achColor(achNum), achBg(achNum))}
+                      title={target !== null ? `Target: ${formatMetricValue(target, m.id)} | ${fmtDelta(current as any, target as any).text}` : undefined}
+                    >
+                      {ach}
                     </TableCell>
-                    <TableCell className="py-1 text-center text-xs text-muted-foreground">{formatMetricValue(target, m.id)}</TableCell>
-                    <TableCell className={cn("py-1 text-center text-xs font-black rounded", achColor(achNum), achBg(achNum))}>{ach}</TableCell>
-                    <TableCell className={cn("py-1 text-center text-xs font-black rounded", achColor(moAchNum), achBg(moAchNum))}
+                    <TableCell
+                      className={cn("py-1 text-center text-xs font-black rounded", achColor(moAchNum), achBg(moAchNum))}
                       title={mtdVal !== null && monthlyTarget ? `MTD: ${mtdVal} / ${monthlyTarget}` : undefined}
-                    >{moAch}</TableCell>
+                    >
+                      {moAch}
+                    </TableCell>
                     <TableCell
                       className="py-1 text-center text-xs font-bold text-amber-600 cursor-help"
                       title={hs?.achieved_week ? `Achieved: w/c ${new Date(hs.achieved_week).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}` : undefined}
                     >
-                      {bestEver !== null ? formatDashboardValue(bestEver, m.id) : '—'}
+                      {bestEver !== null ? (['L12', 'L14', 'L17'].includes(m.id) ? formatPct(bestEver as number) : formatDashboardValue(bestEver, m.id)) : '—'}
+                    </TableCell>
+                    <TableCell
+                      className="py-1 text-center text-xs font-bold text-amber-600 cursor-help"
+                      title={hs?.achieved_month ? `Achieved: ${new Date(hs.achieved_month + '-01').toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}` : undefined}
+                    >
+                      {bestEverMonth !== null ? (['L12', 'L14', 'L17'].includes(m.id) ? formatPct(bestEverMonth as number) : formatDashboardValue(bestEverMonth, m.id)) : '—'}
                     </TableCell>
                   </>
                 )}

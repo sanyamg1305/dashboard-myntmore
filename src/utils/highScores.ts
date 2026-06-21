@@ -15,13 +15,21 @@ export async function backfillHighScores(clientId: string): Promise<void> {
 
   if (error || !rows || rows.length === 0) return
 
-  // Track best value and which week it was achieved
+  // Track best single-week value and which week it was achieved
   const best: Record<string, { value: number; week: string; name: string }> = {}
+  // Track per-month sums of the raw underlying counters, to derive monthly bests
+  const monthSums: Record<string, Record<string, number>> = {}
+
+  const addToMonth = (month: string, id: string, val: number) => {
+    if (!monthSums[month]) monthSums[month] = {}
+    monthSums[month][id] = (monthSums[month][id] ?? 0) + val
+  }
 
   for (const row of rows) {
     const cm = row.content_metrics as Record<string, any> ?? {}
     const lm = row.leadgen_metrics as Record<string, any> ?? {}
     const weekStart = row.week_start
+    const month = weekStart.slice(0, 7)
 
     // Compute auto-calculated metrics that may not be stored directly
     const C06 = readNum(cm, 'C06'), C07 = readNum(cm, 'C07'), C08 = readNum(cm, 'C08')
@@ -42,6 +50,8 @@ export async function backfillHighScores(clientId: string): Promise<void> {
         if (!best[id] || val > best[id].value) {
           best[id] = { value: val, week: weekStart, name }
         }
+        // C26 is an average, not summable across weeks — skip it for monthly totals
+        if (id !== 'C26') addToMonth(month, id, val)
       }
     })
 
@@ -59,6 +69,27 @@ export async function backfillHighScores(clientId: string): Promise<void> {
       best['L17'] = { value: posRate, week: weekStart, name: 'Positive Response Rate' }
   }
 
+  // Derive monthly bests: sum of underlying counters per month, max across all months.
+  // Rate metrics (L12/L14/L17) are derived from the monthly sums of their inputs,
+  // since rates can't be summed across weeks.
+  const bestMonth: Record<string, { value: number; month: string }> = {}
+  for (const [month, sums] of Object.entries(monthSums)) {
+    for (const [id, value] of Object.entries(sums)) {
+      if (!bestMonth[id] || value > bestMonth[id].value) {
+        bestMonth[id] = { value, month }
+      }
+    }
+    const accRate = calcAcceptanceRate(sums['L11'] ?? null, sums['L10'] ?? null)
+    const respRate = calcResponseRate(sums['L13'] ?? null, sums['L11'] ?? null)
+    const posRate = calcPositiveRate(sums['L15'] ?? null, sums['L13'] ?? null)
+    if (accRate && accRate > 0 && (!bestMonth['L12'] || accRate > bestMonth['L12'].value))
+      bestMonth['L12'] = { value: accRate, month }
+    if (respRate && respRate > 0 && (!bestMonth['L14'] || respRate > bestMonth['L14'].value))
+      bestMonth['L14'] = { value: respRate, month }
+    if (posRate && posRate > 0 && (!bestMonth['L17'] || posRate > bestMonth['L17'].value))
+      bestMonth['L17'] = { value: posRate, month }
+  }
+
   // Always overwrite with truth from weekly_data — this corrects any stale/garbage entries
   // First delete ALL existing high_scores for this client, then re-insert only what's real
   await supabase.from('high_scores').delete().eq('client_id', clientId)
@@ -71,6 +102,8 @@ export async function backfillHighScores(clientId: string): Promise<void> {
     metric_name: name,
     lifetime_high: value,
     achieved_week: week,
+    lifetime_high_month: bestMonth[id]?.value ?? null,
+    achieved_month: bestMonth[id]?.month ?? null,
     previous_high: null,
     updated_at: new Date().toISOString(),
   }))
