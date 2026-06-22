@@ -320,18 +320,16 @@ export function DataEntryPage() {
         week_label: weekInfo?.label || getWeekLabel(selectedWeek),
       }
 
+      // Every save (draft or submit) marks the data as submitted so it shows
+      // on the dashboard immediately — there's no separate review/approval step.
       if (activeTab === 'content') {
         payload.content_metrics = contentMetrics
-        if (isSubmit) {
-          payload.content_submitted_at = new Date().toISOString()
-          payload.content_submitted_by = user?.id ?? null
-        }
+        payload.content_submitted_at = new Date().toISOString()
+        payload.content_submitted_by = user?.id ?? null
       } else {
         payload.leadgen_metrics = leadGenMetrics
-        if (isSubmit) {
-          payload.leadgen_submitted_at = new Date().toISOString()
-          payload.leadgen_submitted_by = user?.id ?? null
-        }
+        payload.leadgen_submitted_at = new Date().toISOString()
+        payload.leadgen_submitted_by = user?.id ?? null
       }
 
       const { error } = await supabase
@@ -362,20 +360,18 @@ export function DataEntryPage() {
       syncAllCampaignTotals(selectedClientId, selectedWeek)
         .catch(e => console.warn('Campaign sync failed:', e))
 
-      if (isSubmit) {
-        const healthResult = await updateClientHealth(
-          selectedClientId,
-          selectedWeek,
-          activeTab === 'content' ? contentMetrics : (weeklyData?.content_metrics as Record<string, unknown> || {}),
-          activeTab === 'leadgen' ? leadGenMetrics : (weeklyData?.leadgen_metrics as Record<string, unknown> || {})
-        ).catch(e => { console.warn('Health check failed:', e); return null; })
+      const healthResult = await updateClientHealth(
+        selectedClientId,
+        selectedWeek,
+        activeTab === 'content' ? contentMetrics : (weeklyData?.content_metrics as Record<string, unknown> || {}),
+        activeTab === 'leadgen' ? leadGenMetrics : (weeklyData?.leadgen_metrics as Record<string, unknown> || {})
+      ).catch(e => { console.warn('Health check failed:', e); return null; })
 
-        if (healthResult) {
-          const delta = healthResult.prevScore ? healthResult.score - healthResult.prevScore : 0
-          toast(`Health Score: ${healthResult.score}${delta !== 0 ? ` (${delta > 0 ? '+' : ''}${delta})` : ''}`, {
-            description: "Calculated based on weekly performance targets."
-          })
-        }
+      if (isSubmit && healthResult) {
+        const delta = healthResult.prevScore ? healthResult.score - healthResult.prevScore : 0
+        toast(`Health Score: ${healthResult.score}${delta !== 0 ? ` (${delta > 0 ? '+' : ''}${delta})` : ''}`, {
+          description: "Calculated based on weekly performance targets."
+        })
 
         toast.success("Week submitted successfully!")
       } else {
