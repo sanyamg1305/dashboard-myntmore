@@ -1281,9 +1281,11 @@ export function DashboardPage() {
                                 <DashboardCampaignsSection clientId={client.id} displayWeek={displayWeek} onEditCampaign={setEditingCampaign} />
 
                                 {/* Qualitative Cards */}
-                                <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
                                   {[
                                     { label: "What's Working (Content)", icon: <CheckCircle2 className="w-3 h-3 text-status-on" />, value: sv(currentData, 'content_metrics', 'C24') },
+                                    { label: "What's Not Working (Content)", icon: <AlertTriangle className="w-3 h-3 text-status-risk" />, value: sv(currentData, 'content_metrics', 'C25') },
+                                    { label: "What's Working (Lead Gen)", icon: <CheckCircle2 className="w-3 h-3 text-status-on" />, value: sv(currentData, 'leadgen_metrics', 'L28') },
                                     { label: "What's Not Working / Blockers", icon: <AlertTriangle className="w-3 h-3 text-status-risk" />, value: sv(currentData, 'leadgen_metrics', 'L29') },
                                   ].map(({ label, icon, value }) => {
                                     const noteId = `${client.id}-${label}`
