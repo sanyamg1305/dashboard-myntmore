@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { Navigate, Link } from "@tanstack/react-router"
+import { Link } from "@tanstack/react-router"
 import { useAuth } from "@/lib/auth"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { supabase } from "@/integrations/supabase/client"
@@ -116,7 +116,7 @@ function DeliverableAlertRow({ item, displayWeek }: { item: DeliverableAlertItem
 }
 
 export function DashboardPage() {
-  const { session, loading: authLoading, profile, isAdmin } = useAuth()
+  const { session, profile, isAdmin } = useAuth()
   const [clients, setClients] = useState<ClientWithManagers[]>([])
   const [healthScores, setHealthScores] = useState<HealthScore[]>([])
   const [alerts, setAlerts] = useState<ClientAlertRow[]>([])
@@ -878,14 +878,11 @@ export function DashboardPage() {
     })
   }, [clients, weeklyData, targets, displayWeek])
 
-  if (authLoading) return <div className="flex min-h-screen items-center justify-center">Loading...</div>
-  if (!session) return <Navigate to="/login" />
-
   const handleResolveAlert = async (alertId: string) => {
     try {
       const { error } = await supabase
         .from('client_alerts')
-        .update({ is_resolved: true, resolved_by: session.user.id, resolved_at: new Date().toISOString() })
+        .update({ is_resolved: true, resolved_by: session?.user.id, resolved_at: new Date().toISOString() })
         .eq('id', alertId)
       if (error) throw error
       setAlerts(prev => prev.filter(a => a.id !== alertId))
