@@ -58,7 +58,7 @@ function Delta({ curr, prev }: { curr: any; prev: any }) {
 }
 
 export function ClientPortalPage() {
-  const { user, clientRecord, isClient, loading: authLoading, signOut } = useAuth()
+  const { user, clientRecord, isClient, isAdmin, loading: authLoading, signOut } = useAuth()
   const navigate = useNavigate()
   const weekOptions = useMemo(() => getWeekOptions(12), [])
   const [selectedWeek, setSelectedWeek] = useState(getCurrentWeekStart())
@@ -70,12 +70,16 @@ export function ClientPortalPage() {
   const [loading, setLoading] = useState(true)
   const monthWeeks = useMemo(() => getWeeksInSameMonth(selectedWeek), [selectedWeek])
 
-  // Redirect non-clients away
+  // Redirect non-clients away — but only to a destination they can actually
+  // land on. Bouncing every non-client to /dashboard creates an infinite
+  // redirect loop for accounts that are neither a client nor an admin
+  // (e.g. a team member without a role assigned yet), since /dashboard's
+  // own guard immediately redirects non-admins back to /portal.
   useEffect(() => {
     if (authLoading) return
     if (!user) { navigate({ to: '/login' }); return }
-    if (!isClient) { navigate({ to: '/dashboard' }); return }
-  }, [authLoading, user, isClient])
+    if (!isClient && isAdmin) { navigate({ to: '/dashboard' }); return }
+  }, [authLoading, user, isClient, isAdmin])
 
   useEffect(() => {
     if (!clientRecord) return
@@ -150,7 +154,25 @@ export function ClientPortalPage() {
     navigate({ to: '/login' })
   }
 
-  if (authLoading || (!clientRecord && !authLoading)) {
+  if (authLoading || (!isClient && isAdmin)) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-gold" />
+      </div>
+    )
+  }
+
+  if (!isClient) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center gap-3 text-center px-4">
+        <p className="font-semibold">Your account isn't linked to a client yet.</p>
+        <p className="text-sm text-muted-foreground">Ask an admin to assign you a role or link your account to a client.</p>
+        <Button variant="outline" onClick={handleSignOut} className="mt-2">Sign out</Button>
+      </div>
+    )
+  }
+
+  if (!clientRecord) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <Loader2 className="w-8 h-8 animate-spin text-gold" />
