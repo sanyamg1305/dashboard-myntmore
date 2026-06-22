@@ -12,7 +12,9 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as TjPersonalBrandRouteImport } from './routes/tj-personal-brand'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as SalesRouteImport } from './routes/sales'
+import { Route as ReportsRouteImport } from './routes/reports'
 import { Route as ProcessesRouteImport } from './routes/processes'
+import { Route as PortalRouteImport } from './routes/portal'
 import { Route as MonthlyTargetsRouteImport } from './routes/monthly-targets'
 import { Route as MmContentRouteImport } from './routes/mm-content'
 import { Route as LoginRouteImport } from './routes/login'
@@ -43,9 +45,19 @@ const SalesRoute = SalesRouteImport.update({
   path: '/sales',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ReportsRoute = ReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ProcessesRoute = ProcessesRouteImport.update({
   id: '/processes',
   path: '/processes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PortalRoute = PortalRouteImport.update({
+  id: '/portal',
+  path: '/portal',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MonthlyTargetsRoute = MonthlyTargetsRouteImport.update({
@@ -130,7 +142,9 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/mm-content': typeof MmContentRoute
   '/monthly-targets': typeof MonthlyTargetsRoute
+  '/portal': typeof PortalRoute
   '/processes': typeof ProcessesRoute
+  '/reports': typeof ReportsRoute
   '/sales': typeof SalesRoute
   '/settings': typeof SettingsRouteWithChildren
   '/tj-personal-brand': typeof TjPersonalBrandRoute
@@ -150,7 +164,9 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/mm-content': typeof MmContentRoute
   '/monthly-targets': typeof MonthlyTargetsRoute
+  '/portal': typeof PortalRoute
   '/processes': typeof ProcessesRoute
+  '/reports': typeof ReportsRoute
   '/sales': typeof SalesRoute
   '/settings': typeof SettingsRouteWithChildren
   '/tj-personal-brand': typeof TjPersonalBrandRoute
@@ -171,7 +187,9 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/mm-content': typeof MmContentRoute
   '/monthly-targets': typeof MonthlyTargetsRoute
+  '/portal': typeof PortalRoute
   '/processes': typeof ProcessesRoute
+  '/reports': typeof ReportsRoute
   '/sales': typeof SalesRoute
   '/settings': typeof SettingsRouteWithChildren
   '/tj-personal-brand': typeof TjPersonalBrandRoute
@@ -193,7 +211,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/mm-content'
     | '/monthly-targets'
+    | '/portal'
     | '/processes'
+    | '/reports'
     | '/sales'
     | '/settings'
     | '/tj-personal-brand'
@@ -213,7 +233,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/mm-content'
     | '/monthly-targets'
+    | '/portal'
     | '/processes'
+    | '/reports'
     | '/sales'
     | '/settings'
     | '/tj-personal-brand'
@@ -233,7 +255,9 @@ export interface FileRouteTypes {
     | '/login'
     | '/mm-content'
     | '/monthly-targets'
+    | '/portal'
     | '/processes'
+    | '/reports'
     | '/sales'
     | '/settings'
     | '/tj-personal-brand'
@@ -254,7 +278,9 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   MmContentRoute: typeof MmContentRoute
   MonthlyTargetsRoute: typeof MonthlyTargetsRoute
+  PortalRoute: typeof PortalRoute
   ProcessesRoute: typeof ProcessesRoute
+  ReportsRoute: typeof ReportsRoute
   SalesRoute: typeof SalesRoute
   SettingsRoute: typeof SettingsRouteWithChildren
   TjPersonalBrandRoute: typeof TjPersonalBrandRoute
@@ -283,11 +309,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SalesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reports': {
+      id: '/reports'
+      path: '/reports'
+      fullPath: '/reports'
+      preLoaderRoute: typeof ReportsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/processes': {
       id: '/processes'
       path: '/processes'
       fullPath: '/processes'
       preLoaderRoute: typeof ProcessesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/portal': {
+      id: '/portal'
+      path: '/portal'
+      fullPath: '/portal'
+      preLoaderRoute: typeof PortalRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/monthly-targets': {
@@ -429,7 +469,9 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   MmContentRoute: MmContentRoute,
   MonthlyTargetsRoute: MonthlyTargetsRoute,
+  PortalRoute: PortalRoute,
   ProcessesRoute: ProcessesRoute,
+  ReportsRoute: ReportsRoute,
   SalesRoute: SalesRoute,
   SettingsRoute: SettingsRouteWithChildren,
   TjPersonalBrandRoute: TjPersonalBrandRoute,
@@ -437,13 +479,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
