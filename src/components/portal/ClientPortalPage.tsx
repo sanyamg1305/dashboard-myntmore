@@ -249,7 +249,7 @@ export function ClientPortalPage() {
       .from('campaigns')
       .select('*')
       .eq('client_id', clientRecord.id)
-      .order('created_at', { ascending: true })
+      .order('created_at', { ascending: false })
 
     if (!data || data.length === 0) {
       setCampaigns([])
