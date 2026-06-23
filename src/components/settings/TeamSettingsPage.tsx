@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { supabase, supabaseAdmin } from "@/integrations/supabase/client"
+import { supabase } from "@/integrations/supabase/client"
 import { useAuth } from "@/lib/auth"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -55,34 +55,19 @@ export function TeamSettingsPage() {
       toast.error('Password must be at least 8 characters.')
       return
     }
-    if (!supabaseAdmin) {
-      toast.error('Service role key not configured. Cannot create portal users.')
-      return
-    }
     setPortalLoading(true)
     try {
-      // 1. Create auth user
-      const { data: authData, error: authErr } = await supabaseAdmin.auth.admin.createUser({
-        email: portalForm.email,
-        password: portalForm.password,
-        email_confirm: true,
+      const { data: sessionData } = await supabase.auth.getSession()
+      const { data, error } = await supabase.functions.invoke('create-portal-user', {
+        body: {
+          email: portalForm.email,
+          password: portalForm.password,
+          clientId: portalForm.clientId,
+        },
+        headers: { Authorization: `Bearer ${sessionData.session?.access_token}` },
       })
-      if (authErr) throw authErr
-      const newUserId = authData.user.id
-
-      // 2. Create profile
-      await supabase.from('profiles').upsert({
-        id: newUserId,
-        email: portalForm.email,
-        full_name: clients.find(c => c.id === portalForm.clientId)?.name || 'Client',
-        invite_status: 'active',
-      })
-
-      // 3. Set role = member (lowest access; portal access is determined by clients.user_id)
-      await supabase.from('user_roles').insert({ user_id: newUserId, role: 'member' })
-
-      // 4. Link user to client
-      await supabase.from('clients').update({ user_id: newUserId } as any).eq('id', portalForm.clientId)
+      if (error) throw error
+      if (data?.error) throw new Error(data.error)
 
       toast.success('Portal account created and linked!')
       setIsPortalModalOpen(false)
@@ -265,15 +250,15 @@ export function TeamSettingsPage() {
       toast.error('Password must be at least 6 characters')
       return
     }
-    if (!supabaseAdmin) {
-      toast.error('Admin key not configured — add VITE_SUPABASE_SERVICE_ROLE_KEY to your environment')
-      return
-    }
     setResetLoading(true)
-    const { error } = await supabaseAdmin.auth.admin.updateUserById(resetUser.id, { password: newPassword })
+    const { data: sessionData } = await supabase.auth.getSession()
+    const { data, error } = await supabase.functions.invoke('create-portal-user', {
+      body: { action: 'reset_password', userId: resetUser.id, newPassword },
+      headers: { Authorization: `Bearer ${sessionData.session?.access_token}` },
+    })
     setResetLoading(false)
-    if (error) {
-      toast.error('Failed to reset password: ' + error.message)
+    if (error || data?.error) {
+      toast.error('Failed to reset password: ' + (data?.error || error.message))
     } else {
       toast.success(`Password updated for ${resetUser.full_name}`)
       setIsResetModalOpen(false)
