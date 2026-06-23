@@ -368,7 +368,9 @@ export function ClientPortalPage() {
       <header className="bg-white border-b shadow-sm sticky top-0 z-10">
         <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <img src={myntmoreLogo} alt="Myntmore" className="h-10 object-contain" />
+            <a href="https://myntmore.com" target="_blank" rel="noopener noreferrer">
+              <img src={myntmoreLogo} alt="Myntmore" className="h-10 object-contain" />
+            </a>
             <div className="h-6 w-px bg-border" />
             <div>
               <p className="text-sm font-black tracking-tight">{clientRecord?.name}</p>
@@ -928,7 +930,7 @@ export function ClientPortalPage() {
         {/* Footer */}
         <div className="pt-6 border-t text-center">
           <p className="text-xs text-muted-foreground">
-            Powered by <span className="font-bold text-foreground">Myntmore</span> · Data refreshes weekly
+            Powered by <a href="https://myntmore.com" target="_blank" rel="noopener noreferrer" className="font-bold text-foreground hover:underline">Myntmore</a> · Data refreshes weekly
           </p>
         </div>
       </div>
