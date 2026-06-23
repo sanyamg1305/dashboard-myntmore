@@ -5,7 +5,7 @@ import { useAuth } from '@/lib/auth'
 import { buildWeekMetrics, formatPct } from '@/utils/metricCalculations'
 import { CONTENT_METRICS, LEADGEN_METRICS, ALL_METRICS } from '@/data/metrics'
 import { formatDashboardValue } from '@/utils/dataUtils'
-import { getWeekOptions, getCurrentWeekStart, getWeeksInSameMonth } from '@/utils/weekUtils'
+import { getWeekOptions, getPreviousWeekStart, getWeeksInSameMonth } from '@/utils/weekUtils'
 import { CampaignMonthTable } from '@/components/monday/CampaignMonthTable'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -145,7 +145,7 @@ export function ClientPortalPage() {
   const { user, clientRecord, isClient, isAdmin, loading: authLoading, signOut } = useAuth()
   const navigate = useNavigate()
   const weekOptions = useMemo(() => getWeekOptions(12), [])
-  const [selectedWeek, setSelectedWeek] = useState(getCurrentWeekStart())
+  const [selectedWeek, setSelectedWeek] = useState(getPreviousWeekStart())
   const [activeTab, setActiveTab] = useState<'overview' | 'content' | 'leadgen' | 'campaigns' | 'trends' | 'reports'>('overview')
   const [currentData, setCurrentData] = useState<any>(null)
   const [prevData, setPrevData] = useState<any>(null)
