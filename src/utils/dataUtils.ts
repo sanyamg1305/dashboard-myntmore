@@ -142,12 +142,9 @@ export function fmt(val: number | null, unit?: '%' | '₹' | 'K' | 'hrs'): strin
   if (val === null || val === undefined) return '—'
   if (unit === '%') return val.toFixed(1) + '%'
   if (unit === '₹') return '₹' + val.toLocaleString('en-IN')
-  if (unit === 'K' && val >= 1000) return (val / 1000).toFixed(1) + 'K'
   if (unit === 'hrs') return val + ' hrs'
-  
-  if (val >= 1000000) return (val / 1000000).toFixed(1) + 'M'
-  if (val >= 1000) return (val / 1000).toFixed(1) + 'K'
-  return val.toString()
+
+  return val.toLocaleString('en-IN')
 }
 
 export function delta(current: number | null, prev: number | null): string {

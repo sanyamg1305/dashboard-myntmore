@@ -56,7 +56,6 @@ function weeksElapsed(weekStarts: string[]): number {
 
 function fmt(v: number | null): string {
   if (v === null) return '—'
-  if (v >= 1_000_000) return (v / 1_000_000).toFixed(1) + 'M'
   if (v >= 1_000) return v.toLocaleString('en-IN')
   return String(Math.round(v * 10) / 10)
 }

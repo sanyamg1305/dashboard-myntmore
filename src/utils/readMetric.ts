@@ -63,8 +63,6 @@ export function readBool(
 export function fmt(val: number | null): string {
   if (val === null || val === undefined) return '—'
   if (val === 0) return '0'
-  // Large numbers — no decimals needed
-  if (val >= 1000000) return (val / 1000000).toFixed(1) + 'M'
   if (val >= 1000) return val.toLocaleString('en-IN')
   // Small numbers — show as integer (no decimal for counts)
   return String(Math.round(val))

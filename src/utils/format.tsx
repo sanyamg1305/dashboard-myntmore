@@ -37,20 +37,12 @@ export function fmt(
 
   // Rupees
   if (unit === '₹') {
-    if (n >= 100000) return '₹' + (n / 100000).toFixed(1) + 'L'
-    if (n >= 1000) return '₹' + (n / 1000).toFixed(1) + 'K'
     return '₹' + Math.round(n).toLocaleString('en-IN')
-  }
-
-  // Large numbers with K/M
-  if (compact) {
-    if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M'
-    if (n >= 1000) return (n / 1000).toFixed(1) + 'K'
   }
 
   // Default: integer for whole numbers, 1 decimal for floats
   if (decimals !== undefined) return n.toFixed(decimals)
-  if (Number.isInteger(n)) return n.toString()
+  if (Number.isInteger(n)) return n.toLocaleString('en-IN')
   return n.toFixed(1)
 }
 
@@ -92,13 +84,9 @@ export function fmtDelta(
     return { text: `${sign}${delta.toFixed(1)} hrs`, color, isPositive }
   }
 
-  // Compact format for deltas too
   let formatted: string
-  const abs = Math.abs(delta)
-  if (abs >= 1000000) formatted = (delta / 1000000).toFixed(1) + 'M'
-  else if (abs >= 1000) formatted = (delta / 1000).toFixed(1) + 'K'
-  else if (!Number.isInteger(delta)) formatted = delta.toFixed(1)
-  else formatted = delta.toString()
+  if (!Number.isInteger(delta)) formatted = delta.toFixed(1)
+  else formatted = delta.toLocaleString('en-IN')
 
   return { text: `${sign}${formatted}`, color, isPositive }
 }
@@ -187,9 +175,7 @@ export function fmtMetricCell(
   const n = Number(val)
   if (isNaN(n)) return '—'
   if (n === 0) return '0'
-  if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M'
-  if (n >= 1000) return (n / 1000).toFixed(1) + 'K'
-  return n.toString()
+  return n.toLocaleString('en-IN')
 }
 
 export function readVal(
@@ -235,7 +221,5 @@ export function formatDashboardValue(val: number | null, metricId: string): stri
 
   const n = Number(val)
   if (isNaN(n)) return '—'
-  if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M'
-  if (n >= 1000) return n.toLocaleString('en-IN')
-  return String(n)
+  return n.toLocaleString('en-IN')
 }

@@ -41,9 +41,7 @@ function formatVal(val: any): string {
   if (val === null || val === undefined || val === '') return '—'
   const n = Number(val)
   if (isNaN(n)) return '—'
-  if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M'
-  if (n >= 1000) return (n / 1000).toFixed(1) + 'K'
-  return String(n)
+  return n.toLocaleString('en-IN')
 }
 
 function Delta({ curr, prev }: { curr: any; prev: any }) {
