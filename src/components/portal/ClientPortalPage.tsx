@@ -3,7 +3,8 @@ import { useNavigate } from '@tanstack/react-router'
 import { supabase } from '@/integrations/supabase/client'
 import { useAuth } from '@/lib/auth'
 import { buildWeekMetrics, formatPct } from '@/utils/metricCalculations'
-import { CONTENT_METRICS, LEADGEN_METRICS } from '@/data/metrics'
+import { CONTENT_METRICS, LEADGEN_METRICS, ALL_METRICS } from '@/data/metrics'
+import { formatDashboardValue } from '@/utils/dataUtils'
 import { getWeekOptions, getCurrentWeekStart, getWeeksInSameMonth } from '@/utils/weekUtils'
 import { CampaignMonthTable } from '@/components/monday/CampaignMonthTable'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -13,11 +14,96 @@ import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, LineChart, Line
+  ResponsiveContainer, LineChart, Line, Legend
 } from 'recharts'
-import { LogOut, TrendingUp, Users, FileText, BarChart2, Loader2, ArrowUpRight, ArrowDownRight, Minus } from 'lucide-react'
+import { LogOut, TrendingUp, Users, FileText, BarChart2, Loader2, ArrowUpRight, ArrowDownRight, Minus, Calendar, Table2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import myntmoreLogo from '@/assets/myntmore-logo.png'
+
+// ─── Reports tab helpers ────────────────────────────────────────────────────
+
+function snapToMonday(dateStr: string): string {
+  const d = new Date(dateStr)
+  const dow = d.getUTCDay()
+  d.setUTCDate(d.getUTCDate() - (dow === 0 ? 6 : dow - 1))
+  return d.toISOString().split('T')[0]
+}
+
+function getMondaysBetween(from: string, to: string): string[] {
+  if (!from || !to) return []
+  const weeks: string[] = []
+  const cursor = new Date(snapToMonday(from))
+  const end = new Date(to)
+  while (cursor <= end) {
+    weeks.push(cursor.toISOString().split('T')[0])
+    cursor.setUTCDate(cursor.getUTCDate() + 7)
+  }
+  return weeks
+}
+
+function getNWeeksBack(n: number): { from: string; to: string } {
+  const today = new Date()
+  const dow = today.getUTCDay()
+  const monday = new Date(today)
+  monday.setUTCDate(today.getUTCDate() - (dow === 0 ? 6 : dow - 1))
+  const to = monday.toISOString().split('T')[0]
+  const from = new Date(monday)
+  from.setUTCDate(monday.getUTCDate() - (n - 1) * 7)
+  return { from: from.toISOString().split('T')[0], to }
+}
+
+function getMonthRange(offset: number): { from: string; to: string } {
+  const d = new Date()
+  d.setUTCDate(1)
+  d.setUTCMonth(d.getUTCMonth() + offset)
+  const year = d.getUTCFullYear(), month = d.getUTCMonth()
+  return {
+    from: new Date(Date.UTC(year, month, 1)).toISOString().split('T')[0],
+    to: new Date(Date.UTC(year, month + 1, 0)).toISOString().split('T')[0],
+  }
+}
+
+function fmtWeekShort(dateStr: string): string {
+  const d = new Date(dateStr)
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'UTC' })
+}
+
+function achTextColor(pct: number | null): string {
+  if (pct === null) return ''
+  if (pct >= 100) return 'text-blue-600'
+  if (pct >= 75) return 'text-green-600'
+  if (pct >= 50) return 'text-amber-600'
+  return 'text-red-600'
+}
+
+function achBgColor(pct: number | null): string {
+  if (pct === null) return ''
+  if (pct >= 100) return 'bg-blue-50'
+  if (pct >= 75) return 'bg-green-50'
+  if (pct >= 50) return 'bg-amber-50'
+  return 'bg-red-50'
+}
+
+function achBadge(pct: number | null) {
+  if (pct === null) return null
+  if (pct >= 100) return { label: 'Hit!', cls: 'bg-blue-100 text-blue-700 border-blue-200' }
+  if (pct >= 75) return { label: 'On Track', cls: 'bg-green-100 text-green-700 border-green-200' }
+  if (pct >= 50) return { label: 'Behind', cls: 'bg-amber-100 text-amber-700 border-amber-200' }
+  return { label: 'Critical', cls: 'bg-red-100 text-red-700 border-red-200' }
+}
+
+type DatePreset = '4w' | '8w' | '12w' | 'this_month' | 'last_month' | 'custom'
+type ViewMode = 'table' | 'trends' | 'summary'
+type CategoryFilter = 'all' | 'content' | 'leadgen'
+
+const DATE_PRESETS: { id: DatePreset; label: string }[] = [
+  { id: '4w', label: 'Last 4W' },
+  { id: '8w', label: 'Last 8W' },
+  { id: '12w', label: 'Last 12W' },
+  { id: 'this_month', label: 'This Month' },
+  { id: 'last_month', label: 'Last Month' },
+  { id: 'custom', label: 'Custom' },
+]
 
 const GOLD = '#FFC947'
 
@@ -60,13 +146,85 @@ export function ClientPortalPage() {
   const navigate = useNavigate()
   const weekOptions = useMemo(() => getWeekOptions(12), [])
   const [selectedWeek, setSelectedWeek] = useState(getCurrentWeekStart())
-  const [activeTab, setActiveTab] = useState<'overview' | 'content' | 'leadgen' | 'campaigns' | 'trends'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'content' | 'leadgen' | 'campaigns' | 'trends' | 'reports'>('overview')
   const [currentData, setCurrentData] = useState<any>(null)
   const [prevData, setPrevData] = useState<any>(null)
   const [historyData, setHistoryData] = useState<any[]>([])
   const [campaigns, setCampaigns] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const monthWeeks = useMemo(() => getWeeksInSameMonth(selectedWeek), [selectedWeek])
+
+  // Reports tab state
+  const [reportWeeklyData, setReportWeeklyData] = useState<any[]>([])
+  const [reportTargets, setReportTargets] = useState<any[]>([])
+  const [reportLoading, setReportLoading] = useState(false)
+  const [datePreset, setDatePreset] = useState<DatePreset>('8w')
+  const [customFrom, setCustomFrom] = useState('')
+  const [customTo, setCustomTo] = useState('')
+  const [reportCategory, setReportCategory] = useState<CategoryFilter>('all')
+  const [reportView, setReportView] = useState<ViewMode>('table')
+
+  const reportDateRange = useMemo(() => {
+    if (datePreset === '4w') return getNWeeksBack(4)
+    if (datePreset === '8w') return getNWeeksBack(8)
+    if (datePreset === '12w') return getNWeeksBack(12)
+    if (datePreset === 'this_month') return getMonthRange(0)
+    if (datePreset === 'last_month') return getMonthRange(-1)
+    return { from: customFrom, to: customTo }
+  }, [datePreset, customFrom, customTo])
+
+  const reportWeekList = useMemo(() => getMondaysBetween(reportDateRange.from, reportDateRange.to), [reportDateRange])
+
+  useEffect(() => {
+    if (!clientRecord || activeTab !== 'reports' || reportWeekList.length === 0) return
+    setReportLoading(true)
+    Promise.all([
+      supabase.from('weekly_data').select('*')
+        .eq('client_id', clientRecord.id)
+        .gte('week_start', reportWeekList[0])
+        .lte('week_start', reportWeekList[reportWeekList.length - 1]),
+      supabase.from('targets').select('*')
+        .eq('client_id', clientRecord.id)
+        .eq('target_type', 'weekly')
+        .in('period', reportWeekList),
+    ]).then(([{ data: wd }, { data: tg }]) => {
+      setReportWeeklyData(wd || [])
+      setReportTargets(tg || [])
+      setReportLoading(false)
+    })
+  }, [clientRecord, activeTab, reportWeekList.join(',')])
+
+  const reportAvailableMetrics = useMemo(() => {
+    const base = ALL_METRICS.filter(m => m.type !== 'textarea' && m.type !== 'boolean' && m.type !== 'slider')
+    return reportCategory === 'content' ? base.filter(m => m.category === 'content')
+      : reportCategory === 'leadgen' ? base.filter(m => m.category === 'leadgen')
+      : base
+  }, [reportCategory])
+
+  const getReportCellValue = (weekStart: string, metricId: string): number | null => {
+    const row = reportWeeklyData.find(r => r.week_start === weekStart)
+    if (!row) return null
+    const built = buildWeekMetrics(row)
+    const val = built?.[metricId as keyof typeof built]
+    if (val === null || val === undefined) return null
+    const n = Number(val)
+    return isNaN(n) ? null : n
+  }
+
+  const getReportTarget = (metricId: string, weekStart?: string): number | null => {
+    let t = weekStart
+      ? reportTargets.find(t => t.metric_id === metricId && t.period === weekStart)
+      : null
+    if (!t) {
+      const all = reportTargets
+        .filter(t => t.metric_id === metricId && t.target_value !== null)
+        .sort((a, b) => (b.period ?? '').localeCompare(a.period ?? ''))
+      t = all[0] ?? null
+    }
+    if (!t?.target_value) return null
+    const n = Number(t.target_value)
+    return isNaN(n) ? null : n
+  }
 
   // Redirect non-clients away — but only to a destination they can actually
   // land on. Bouncing every non-client to /dashboard creates an infinite
@@ -201,6 +359,7 @@ export function ClientPortalPage() {
     { id: 'leadgen', label: 'Lead Gen' },
     { id: 'campaigns', label: 'Campaigns' },
     { id: 'trends', label: 'Trends' },
+    { id: 'reports', label: 'Reports' },
   ] as const
 
   return (
@@ -496,6 +655,271 @@ export function ClientPortalPage() {
                     </CardContent>
                   </Card>
                 ))}
+              </div>
+            )}
+
+            {/* REPORTS TAB */}
+            {activeTab === 'reports' && (
+              <div className="space-y-4">
+                {/* Filter bar */}
+                <Card className="bg-white border shadow-sm">
+                  <CardContent className="p-4 space-y-3">
+                    <div className="flex flex-wrap gap-2 items-center">
+                      <span className="text-[10px] text-muted-foreground font-semibold uppercase mr-1">Period:</span>
+                      {DATE_PRESETS.map(p => (
+                        <button
+                          key={p.id}
+                          onClick={() => setDatePreset(p.id)}
+                          className={cn(
+                            "px-2.5 py-1 text-xs rounded-md border transition-all",
+                            datePreset === p.id
+                              ? "bg-gold text-black border-gold font-bold shadow-sm"
+                              : "bg-background hover:bg-muted border-border text-muted-foreground"
+                          )}
+                        >
+                          {p.label}
+                        </button>
+                      ))}
+                      {datePreset === 'custom' && (
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="date" value={customFrom}
+                            onChange={e => setCustomFrom(e.target.value)}
+                            className="border rounded-md px-2 py-1 text-xs h-8 bg-background"
+                          />
+                          <span className="text-muted-foreground text-xs">→</span>
+                          <input
+                            type="date" value={customTo}
+                            onChange={e => setCustomTo(e.target.value)}
+                            className="border rounded-md px-2 py-1 text-xs h-8 bg-background"
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 items-center justify-between">
+                      <div className="flex gap-0.5 border rounded-lg p-0.5 bg-muted/30">
+                        {(['all', 'content', 'leadgen'] as const).map(cat => (
+                          <button
+                            key={cat}
+                            onClick={() => setReportCategory(cat)}
+                            className={cn(
+                              "px-2.5 py-1 text-xs rounded-md transition-all",
+                              reportCategory === cat ? "bg-background shadow-sm font-bold" : "text-muted-foreground hover:text-foreground"
+                            )}
+                          >
+                            {cat === 'all' ? 'All' : cat === 'content' ? 'Content' : 'Lead Gen'}
+                          </button>
+                        ))}
+                      </div>
+
+                      <div className="flex gap-0.5 border rounded-lg p-0.5 bg-muted/30">
+                        {([
+                          ['table', Table2, 'Table'],
+                          ['trends', TrendingUp, 'Trends'],
+                          ['summary', BarChart2, 'Summary'],
+                        ] as const).map(([id, Icon, label]) => (
+                          <button
+                            key={id}
+                            onClick={() => setReportView(id)}
+                            className={cn(
+                              "flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs transition-all",
+                              reportView === id ? "bg-background shadow-sm font-bold" : "text-muted-foreground hover:text-foreground"
+                            )}
+                          >
+                            <Icon className="h-3.5 w-3.5" />
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {reportWeekList.length > 0 && (
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <Calendar className="h-3.5 w-3.5" />
+                        <span className="font-medium">{reportWeekList.length} weeks</span>
+                        <span>·</span>
+                        <span>{fmtWeekShort(reportWeekList[0])} → {fmtWeekShort(reportWeekList[reportWeekList.length - 1])}</span>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {reportLoading ? (
+                  <div className="flex items-center justify-center py-20">
+                    <Loader2 className="w-8 h-8 animate-spin text-gold" />
+                  </div>
+                ) : reportWeekList.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-20 text-center text-sm text-muted-foreground">
+                    Pick a date range to see your report.
+                  </div>
+                ) : (
+                  <>
+                    {reportView === 'table' && (
+                      <Card className="bg-white border shadow-sm overflow-hidden">
+                        <div className="overflow-x-auto">
+                          <Table>
+                            <TableHeader className="bg-muted/20">
+                              <TableRow>
+                                <TableHead className="text-[10px] font-black uppercase min-w-[180px] sticky left-0 bg-muted/20 z-10">Metric</TableHead>
+                                {reportWeekList.map(w => (
+                                  <TableHead key={w} className="text-[10px] font-black uppercase text-center whitespace-nowrap min-w-[70px]">
+                                    {fmtWeekShort(w)}
+                                  </TableHead>
+                                ))}
+                                <TableHead className="text-[10px] font-black uppercase text-center bg-amber-50 min-w-[60px]">Total</TableHead>
+                                <TableHead className="text-[10px] font-black uppercase text-center bg-amber-50 min-w-[70px]">Avg/wk</TableHead>
+                                <TableHead className="text-[10px] font-black uppercase text-center min-w-[70px]">Wk Target</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {reportAvailableMetrics.map(m => {
+                                const values = reportWeekList.map(w => getReportCellValue(w, m.id))
+                                const numVals = values.filter(v => v !== null) as number[]
+                                const total = numVals.length > 0 ? numVals.reduce((a, b) => a + b, 0) : null
+                                const avg = total !== null && numVals.length > 0 ? total / numVals.length : null
+                                const tgt = getReportTarget(m.id)
+
+                                return (
+                                  <TableRow key={m.id} className="h-8 hover:bg-muted/10">
+                                    <TableCell className="py-1 text-xs font-medium sticky left-0 bg-background border-r z-[5] whitespace-nowrap max-w-[180px] truncate">
+                                      {m.name}
+                                    </TableCell>
+                                    {values.map((val, wi) => {
+                                      const weekTgt = getReportTarget(m.id, reportWeekList[wi])
+                                      const pct = weekTgt && val !== null ? Math.round((val / weekTgt) * 100) : null
+                                      return (
+                                        <TableCell
+                                          key={reportWeekList[wi]}
+                                          className={cn(
+                                            "py-1 text-center text-xs font-bold tabular-nums",
+                                            val !== null ? cn(achTextColor(pct), achBgColor(pct)) : 'text-muted-foreground/40'
+                                          )}
+                                        >
+                                          {val !== null ? formatDashboardValue(val, m.id) : '—'}
+                                        </TableCell>
+                                      )
+                                    })}
+                                    <TableCell className="py-1 text-center text-xs font-black bg-amber-50/60 tabular-nums">
+                                      {total !== null ? formatDashboardValue(total, m.id) : '—'}
+                                    </TableCell>
+                                    <TableCell className="py-1 text-center text-xs font-bold bg-amber-50/60 tabular-nums">
+                                      {avg !== null ? formatDashboardValue(Math.round(avg * 10) / 10, m.id) : '—'}
+                                    </TableCell>
+                                    <TableCell className="py-1 text-center text-xs text-muted-foreground tabular-nums">
+                                      {tgt !== null ? formatDashboardValue(tgt, m.id) : '—'}
+                                    </TableCell>
+                                  </TableRow>
+                                )
+                              })}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      </Card>
+                    )}
+
+                    {reportView === 'trends' && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                        {reportAvailableMetrics.slice(0, 12).map(m => {
+                          const chartData = reportWeekList.map(w => ({
+                            week: fmtWeekShort(w),
+                            value: getReportCellValue(w, m.id),
+                          }))
+                          const maxTarget = getReportTarget(m.id) ?? 0
+
+                          return (
+                            <Card key={m.id} className="overflow-hidden">
+                              <CardHeader className="pb-1 pt-3 px-4">
+                                <div className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">{m.group}</div>
+                                <CardTitle className="text-sm font-bold leading-tight">{m.name}</CardTitle>
+                              </CardHeader>
+                              <CardContent className="px-2 pb-3">
+                                <ResponsiveContainer width="100%" height={150}>
+                                  <LineChart data={chartData} margin={{ top: 4, right: 12, bottom: 0, left: -18 }}>
+                                    <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                                    <XAxis dataKey="week" tick={{ fontSize: 9 }} tickLine={false} />
+                                    <YAxis tick={{ fontSize: 9 }} tickLine={false} axisLine={false} />
+                                    <Tooltip
+                                      contentStyle={{ fontSize: 11, borderRadius: 8, border: '1px solid #e5e7eb' }}
+                                      labelStyle={{ fontWeight: 'bold', marginBottom: 4 }}
+                                    />
+                                    <Line
+                                      type="monotone" dataKey="value"
+                                      stroke={GOLD} strokeWidth={2}
+                                      dot={{ r: 3, fill: GOLD }}
+                                      activeDot={{ r: 5 }}
+                                      connectNulls={false}
+                                    />
+                                  </LineChart>
+                                </ResponsiveContainer>
+                              </CardContent>
+                            </Card>
+                          )
+                        })}
+                        {reportAvailableMetrics.length > 12 && (
+                          <div className="col-span-full text-center text-xs text-muted-foreground py-4">
+                            Showing first 12 metrics. Narrow the category filter to see more.
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {reportView === 'summary' && (
+                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+                        {reportAvailableMetrics.map(m => {
+                          const values = reportWeekList.map(w => getReportCellValue(w, m.id))
+                          const numVals = values.filter(v => v !== null) as number[]
+                          if (numVals.length === 0) return null
+                          const total = numVals.reduce((a, b) => a + b, 0)
+                          const avg = total / numVals.length
+                          const best = Math.max(...numVals)
+                          const bestWeekIdx = values.findIndex(v => v === best)
+                          const bestWeek = bestWeekIdx >= 0 ? fmtWeekShort(reportWeekList[bestWeekIdx]) : '—'
+                          const tgt = getReportTarget(m.id)
+                          const avgAch = tgt ? Math.round((avg / tgt) * 100) : null
+                          const badge = achBadge(avgAch)
+
+                          return (
+                            <Card key={m.id} className="overflow-hidden">
+                              <CardContent className="p-3">
+                                <div className="text-[9px] font-black uppercase tracking-widest text-muted-foreground truncate mb-1">{m.name}</div>
+                                <div className={cn("text-2xl font-black tabular-nums leading-none", achTextColor(avgAch))}>
+                                  {formatDashboardValue(total, m.id)}
+                                </div>
+                                <div className="text-[9px] text-muted-foreground mt-0.5">total · {numVals.length}w</div>
+                                <div className="mt-2.5 space-y-1">
+                                  <div className="flex items-center justify-between text-[10px]">
+                                    <span className="text-muted-foreground">Avg/wk</span>
+                                    <span className="font-bold tabular-nums">{formatDashboardValue(Math.round(avg * 10) / 10, m.id)}</span>
+                                  </div>
+                                  <div className="flex items-center justify-between text-[10px]">
+                                    <span className="text-muted-foreground">Best wk</span>
+                                    <span className="font-bold tabular-nums">{formatDashboardValue(best, m.id)}</span>
+                                  </div>
+                                  {tgt !== null && (
+                                    <div className="flex items-center justify-between text-[10px]">
+                                      <span className="text-muted-foreground">Wk target</span>
+                                      <span className="font-bold tabular-nums">{formatDashboardValue(tgt, m.id)}</span>
+                                    </div>
+                                  )}
+                                  <div className="flex items-center justify-between text-[10px]">
+                                    <span className="text-muted-foreground">Peak date</span>
+                                    <span className="font-bold">{bestWeek}</span>
+                                  </div>
+                                </div>
+                                {badge && (
+                                  <div className={cn("mt-2 text-center text-[10px] font-black rounded-md py-1 border", badge.cls)}>
+                                    {avgAch}% · {badge.label}
+                                  </div>
+                                )}
+                              </CardContent>
+                            </Card>
+                          )
+                        }).filter(Boolean)}
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
             )}
           </>
