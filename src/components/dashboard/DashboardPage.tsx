@@ -351,11 +351,10 @@ export function DashboardPage() {
             const isNewHigh = currentNum !== null && currentNum > 0 && bestEver !== null && currentNum > Number(bestEver)
 
             let achNum: number | null = null
-            let ach = '—'
             if (target && currentNum !== null) {
               achNum = Math.round((currentNum / Number(target)) * 100)
-              ach = achNum + '%'
             }
+            const ach = target !== null ? formatMetricValue(target, m.id) : '—'
 
             const achColor = (n: number | null) => n === null ? ''
               : n >= 100 ? 'text-green-600'
@@ -370,11 +369,10 @@ export function DashboardPage() {
 
             const mtdVal = clientMtdTotals[m.id] ?? null
             let moAchNum: number | null = null
-            let moAch = '—'
             if (monthlyTarget && mtdVal !== null) {
               moAchNum = Math.round((mtdVal / Number(monthlyTarget)) * 100)
-              moAch = moAchNum + '%'
             }
+            const moAch = monthlyTarget !== null ? formatMetricValue(monthlyTarget, m.id) : '—'
 
             return (
               <TableRow key={m.id} className="h-8">
