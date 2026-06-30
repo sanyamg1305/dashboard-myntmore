@@ -1331,6 +1331,9 @@ export function DashboardPage() {
                                   </div>
                                   </div>
 
+                                  {/* Aha Moments */}
+                                  <AhaMomentsAdmin clientId={client.id} />
+
                                   {/* Weekly Summary Footer */}
                                   {(() => {
                                     const weekBuilt = buildWeekMetrics(currentData) as Record<string, any> | null
@@ -1729,6 +1732,103 @@ export function DashboardPage() {
               onClose={() => setEditingCampaign(null)}
             />
           )}
+    </div>
+  )
+}
+
+function AhaMomentsAdmin({ clientId }: { clientId: string }) {
+  const [moments, setMoments] = useState<any[]>([])
+  const [showForm, setShowForm] = useState(false)
+  const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
+  const [emoji, setEmoji] = useState('🎉')
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    (supabase as any).from('aha_moments').select('*')
+      .eq('client_id', clientId)
+      .order('created_at', { ascending: false })
+      .then(({ data }: { data: any[] | null }) => setMoments(data || []))
+  }, [clientId])
+
+  const handlePost = async () => {
+    if (!title.trim()) return
+    setSaving(true)
+    const { data } = await (supabase as any).from('aha_moments').insert({
+      client_id: clientId, title: title.trim(), description: description.trim() || null, emoji,
+    }).select().single()
+    if (data) setMoments(prev => [data, ...prev])
+    setTitle(''); setDescription(''); setEmoji('🎉'); setShowForm(false); setSaving(false)
+    toast.success('Aha moment posted!')
+  }
+
+  const handleDelete = async (id: string) => {
+    await (supabase as any).from('aha_moments').delete().eq('id', id)
+    setMoments(prev => prev.filter(m => m.id !== id))
+  }
+
+  const EMOJIS = ['🎉', '🚀', '⭐', '🏆', '💪', '🔥', '✅', '💡', '📈', '🎯']
+
+  return (
+    <div className="mt-6 border rounded-lg p-4 bg-amber-50/30 border-amber-200/60">
+      <div className="flex items-center justify-between mb-3">
+        <h4 className="text-xs font-black uppercase tracking-widest flex items-center gap-1.5">
+          🎉 Aha Moments
+        </h4>
+        <Button size="sm" variant="outline" className="h-7 text-xs gap-1.5 border-gold/40 hover:bg-gold/10"
+          onClick={() => setShowForm(v => !v)}>
+          {showForm ? '✕ Cancel' : '+ Post Moment'}
+        </Button>
+      </div>
+
+      {showForm && (
+        <div className="mb-4 p-3 bg-white rounded-lg border space-y-2">
+          <div className="flex gap-1 flex-wrap">
+            {EMOJIS.map(e => (
+              <button key={e} onClick={() => setEmoji(e)}
+                className={cn("text-lg p-1 rounded transition-all", emoji === e ? "bg-gold/20 ring-2 ring-gold/40" : "hover:bg-muted")}>
+                {e}
+              </button>
+            ))}
+          </div>
+          <input
+            placeholder="Title — e.g. First meeting booked! 🏆"
+            value={title} onChange={e => setTitle(e.target.value)}
+            className="w-full border rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-gold/40"
+          />
+          <textarea
+            placeholder="Optional details…"
+            value={description} onChange={e => setDescription(e.target.value)}
+            rows={2}
+            className="w-full border rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-gold/40 resize-none"
+          />
+          <Button size="sm" className="bg-gold text-black hover:bg-gold/80 h-7 text-xs font-black"
+            onClick={handlePost} disabled={saving || !title.trim()}>
+            {saving ? 'Posting…' : 'Post'}
+          </Button>
+        </div>
+      )}
+
+      {moments.length === 0 ? (
+        <p className="text-xs text-muted-foreground italic">No aha moments posted yet.</p>
+      ) : (
+        <div className="space-y-2">
+          {moments.map(m => (
+            <div key={m.id} className="flex items-start gap-2 p-2.5 bg-white rounded-lg border">
+              <span className="text-xl leading-none mt-0.5">{m.emoji || '🎉'}</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-black leading-tight">{m.title}</p>
+                {m.description && <p className="text-xs text-muted-foreground mt-0.5">{m.description}</p>}
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  {new Date(m.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                </p>
+              </div>
+              <button onClick={() => handleDelete(m.id)}
+                className="text-muted-foreground/40 hover:text-red-500 text-xs shrink-0 mt-0.5">✕</button>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

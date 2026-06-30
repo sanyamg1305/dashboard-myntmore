@@ -146,11 +146,12 @@ export function ClientPortalPage() {
   const navigate = useNavigate()
   const weekOptions = useMemo(() => getWeekOptions(12), [])
   const [selectedWeek, setSelectedWeek] = useState(getPreviousWeekStart())
-  const [activeTab, setActiveTab] = useState<'overview' | 'content' | 'leadgen' | 'campaigns' | 'trends' | 'reports'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'content' | 'leadgen' | 'campaigns' | 'trends' | 'reports' | 'highlights'>('overview')
   const [currentData, setCurrentData] = useState<any>(null)
   const [prevData, setPrevData] = useState<any>(null)
   const [historyData, setHistoryData] = useState<any[]>([])
   const [campaigns, setCampaigns] = useState<any[]>([])
+  const [ahaMoments, setAhaMoments] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [weeklyTargets, setWeeklyTargets] = useState<any[]>([])
   const [monthlyTargets, setMonthlyTargets] = useState<any[]>([])
@@ -244,6 +245,10 @@ export function ClientPortalPage() {
     if (!clientRecord) return
     fetchData()
     fetchCampaigns()
+    ;(supabase as any).from('aha_moments').select('*')
+      .eq('client_id', clientRecord.id)
+      .order('created_at', { ascending: false })
+      .then(({ data }: { data: any[] | null }) => setAhaMoments(data || []))
   }, [clientRecord, selectedWeek])
 
   const fetchCampaigns = async () => {
@@ -410,6 +415,7 @@ export function ClientPortalPage() {
     { id: 'leadgen', label: 'Lead Gen' },
     { id: 'campaigns', label: 'Campaigns' },
     { id: 'trends', label: 'Trends' },
+    { id: 'highlights', label: '✨ Highlights' },
     { id: 'reports', label: 'Reports' },
   ] as const
 
@@ -769,6 +775,76 @@ export function ClientPortalPage() {
                     </CardContent>
                   </Card>
                 ))}
+              </div>
+            )}
+
+            {/* HIGHLIGHTS TAB */}
+            {activeTab === 'highlights' && (
+              <div className="space-y-6">
+                {/* Aha Moments */}
+                <div>
+                  <h2 className="text-base font-black uppercase tracking-wider mb-3 flex items-center gap-2">
+                    🎉 Aha Moments
+                  </h2>
+                  {ahaMoments.length === 0 ? (
+                    <Card className="bg-white border shadow-sm">
+                      <CardContent className="py-10 text-center text-sm text-muted-foreground">
+                        No highlights yet — your account manager will post milestone wins here.
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {ahaMoments.map(m => (
+                        <Card key={m.id} className="bg-white border shadow-sm overflow-hidden">
+                          <CardContent className="p-5">
+                            <div className="flex items-start gap-3">
+                              <span className="text-3xl leading-none mt-0.5">{m.emoji || '🎉'}</span>
+                              <div>
+                                <p className="font-black text-base leading-tight">{m.title}</p>
+                                {m.description && (
+                                  <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{m.description}</p>
+                                )}
+                                <p className="text-[10px] text-muted-foreground mt-2 uppercase tracking-widest">
+                                  {new Date(m.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                </p>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Weekly qualitative notes */}
+                <div>
+                  <h2 className="text-base font-black uppercase tracking-wider mb-3 flex items-center gap-2">
+                    📝 This Week's Notes
+                  </h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {[
+                      { id: 'C24', label: "What's Working (Content)", cat: 'content_metrics', icon: '✅' },
+                      { id: 'C25', label: "What's Not Working (Content)", cat: 'content_metrics', icon: '⚠️' },
+                      { id: 'L28', label: "What's Working (Lead Gen)", cat: 'leadgen_metrics', icon: '✅' },
+                      { id: 'L29', label: "What's Not Working / Blockers", cat: 'leadgen_metrics', icon: '⚠️' },
+                    ].map(m => {
+                      const raw = currentData?.[m.cat as keyof typeof currentData]
+                      const val = raw ? (raw as any)[m.id] : null
+                      return (
+                        <Card key={m.id} className="bg-white border shadow-sm">
+                          <CardContent className="p-5">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2 flex items-center gap-1.5">
+                              {m.icon} {m.label}
+                            </p>
+                            <p className="text-sm leading-relaxed text-foreground/80 italic">
+                              {val ? `"${val}"` : 'No input this week.'}
+                            </p>
+                          </CardContent>
+                        </Card>
+                      )
+                    })}
+                  </div>
+                </div>
               </div>
             )}
 
