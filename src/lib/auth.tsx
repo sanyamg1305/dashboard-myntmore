@@ -88,10 +88,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    const { data: sub } = supabase.auth.onAuthStateChange((event, s) => {
+    // onAuthStateChange fires for INITIAL_SESSION, SIGNED_IN, SIGNED_OUT, etc.
+    // We keep loading=true the entire time loadProfile is running so the app
+    // never renders with user!=null but isClient still false (which caused the
+    // sidebar+login-form flash on client logins).
+    const { data: sub } = supabase.auth.onAuthStateChange(async (event, s) => {
       setSession(s);
       if (s?.user) {
-        loadProfile(s.user.id);
+        setLoading(true);
+        await loadProfile(s.user.id);
       } else {
         setProfile(null);
         setUserRole(null);
@@ -99,16 +104,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setIsClient(false);
         setClientRecord(null);
       }
-    });
-
-    supabase.auth.getSession().then(({ data: { session: s } }) => {
-      setSession(s);
-      if (s?.user) {
-        loadProfile(s.user.id);
-      }
-      setLoading(false);
-    }).catch(err => {
-      console.error("Session fetch error:", err);
       setLoading(false);
     });
 
