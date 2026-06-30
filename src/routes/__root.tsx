@@ -68,7 +68,7 @@ function RootComponent() {
 }
 
 function AppLayout() {
-  const { user, loading, isClient } = useAuth();
+  const { user, loading, isClient, userRole } = useAuth();
   const path = useRouterState({ select: (s) => s.location.pathname });
   const navigate = useNavigate();
 
@@ -76,16 +76,19 @@ function AppLayout() {
   const isAuthPath = noSidebarPaths.some(p => path.startsWith(p));
   const showSidebar = user && !isAuthPath;
 
+  // Profile is still being fetched if user exists but userRole hasn't resolved yet
+  const profileLoading = !!user && userRole === null;
+
   // Guard: redirect client users away from internal pages
   useEffect(() => {
-    if (loading) return;
+    if (loading || profileLoading) return;
     if (!user) return;
     if (isClient && !path.startsWith('/portal') && !path.startsWith('/login')) {
       navigate({ to: '/portal' });
     }
-  }, [loading, user, isClient, path]);
+  }, [loading, profileLoading, user, isClient, path]);
 
-  if (loading) {
+  if (loading || profileLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
