@@ -152,6 +152,9 @@ export function ClientPortalPage() {
   const [historyData, setHistoryData] = useState<any[]>([])
   const [campaigns, setCampaigns] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [weeklyTargets, setWeeklyTargets] = useState<any[]>([])
+  const [monthlyTargets, setMonthlyTargets] = useState<any[]>([])
+  const [mtdData, setMtdData] = useState<any[]>([])
   const monthWeeks = useMemo(() => getWeeksInSameMonth(selectedWeek), [selectedWeek])
 
   // Reports tab state
@@ -278,14 +281,36 @@ export function ClientPortalPage() {
     if (!clientRecord) return
     setLoading(true)
     try {
-      // Current week
-      const [{ data: curr }, { data: history }] = await Promise.all([
+      // Month boundaries for the selected week
+      const selDate = new Date(selectedWeek + 'T00:00:00Z')
+      const year = selDate.getUTCFullYear(), month = selDate.getUTCMonth()
+      const monthStart = new Date(Date.UTC(year, month, 1)).toISOString().split('T')[0]
+      const monthEnd = new Date(Date.UTC(year, month + 1, 0)).toISOString().split('T')[0]
+
+      const [
+        { data: curr },
+        { data: history },
+        { data: wTargets },
+        { data: mTargets },
+        { data: mtdRows },
+      ] = await Promise.all([
         supabase.from('weekly_data').select('content_metrics, leadgen_metrics, week_start')
           .eq('client_id', clientRecord.id).eq('week_start', selectedWeek).maybeSingle(),
         supabase.from('weekly_data').select('content_metrics, leadgen_metrics, week_start, week_label')
           .eq('client_id', clientRecord.id).order('week_start', { ascending: false }).limit(12),
+        supabase.from('targets').select('metric_id, target_value')
+          .eq('client_id', clientRecord.id).eq('target_type', 'weekly'),
+        supabase.from('targets').select('metric_id, target_value')
+          .eq('client_id', clientRecord.id).eq('target_type', 'monthly'),
+        supabase.from('weekly_data').select('content_metrics, leadgen_metrics, week_start')
+          .eq('client_id', clientRecord.id)
+          .gte('week_start', monthStart)
+          .lte('week_start', monthEnd),
       ])
       setCurrentData(curr)
+      setWeeklyTargets(wTargets || [])
+      setMonthlyTargets(mTargets || [])
+      setMtdData(mtdRows || [])
 
       // Previous week
       const selectedIdx = weekOptions.findIndex(w => w.weekStart === selectedWeek)
@@ -338,6 +363,32 @@ export function ClientPortalPage() {
 
   const currentBuilt = buildWeekMetrics(currentData)
   const prevBuilt = buildWeekMetrics(prevData)
+
+  // MTD totals — sum each metric across all weeks in the selected month
+  const mtdTotals: Record<string, number> = {}
+  for (const row of mtdData) {
+    const built = buildWeekMetrics(row)
+    if (!built) continue
+    for (const [key, val] of Object.entries(built)) {
+      const n = Number(val)
+      if (!isNaN(n) && val !== null && val !== undefined) {
+        mtdTotals[key] = (mtdTotals[key] ?? 0) + n
+      }
+    }
+  }
+
+  // Key metrics to show in the goal progress section
+  const GOAL_METRICS = [
+    { id: 'C09', label: 'Total Posts' },
+    { id: 'C10', label: 'Impressions' },
+    { id: 'C15', label: 'New Followers' },
+    { id: 'L10', label: 'Connection Requests' },
+    { id: 'L11', label: 'Accepted Invitations' },
+    { id: 'L24', label: 'Meetings Booked' },
+  ]
+
+  const selDate = new Date(selectedWeek + 'T00:00:00Z')
+  const monthName = selDate.toLocaleDateString('en-GB', { month: 'long', year: 'numeric', timeZone: 'UTC' })
 
   // Chart data
   const chartData = historyData.map(row => {
@@ -518,6 +569,67 @@ export function ClientPortalPage() {
                     </CardContent>
                   </Card>
                 </div>
+
+                {/* Monthly Summary + Goal Progress */}
+                <Card className="bg-white border shadow-sm">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-sm font-black uppercase tracking-wider flex items-center gap-2">
+                      <TrendingUp className="w-4 h-4 text-gold" /> {monthName} — Goal Progress
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {GOAL_METRICS.map(m => {
+                      const mtd = mtdTotals[m.id] ?? null
+                      const wTgt = weeklyTargets.find(t => t.metric_id === m.id)?.target_value ?? null
+                      const mTgt = monthlyTargets.find(t => t.metric_id === m.id)?.target_value ?? null
+                      // Use monthly target if set, else estimate from weekly * weeks in month
+                      const weeksInMonth = mtdData.length || 4
+                      const effectiveMTgt = mTgt !== null ? Number(mTgt) : (wTgt !== null ? Number(wTgt) * weeksInMonth : null)
+                      const pct = effectiveMTgt && mtd !== null ? Math.min(Math.round((mtd / effectiveMTgt) * 100), 100) : null
+                      const rawPct = effectiveMTgt && mtd !== null ? Math.round((mtd / effectiveMTgt) * 100) : null
+
+                      const barColor = rawPct === null ? 'bg-muted'
+                        : rawPct >= 100 ? 'bg-green-500'
+                        : rawPct >= 75  ? 'bg-yellow-400'
+                        : rawPct >= 50  ? 'bg-orange-400'
+                        : 'bg-red-400'
+
+                      const textColor = rawPct === null ? 'text-muted-foreground'
+                        : rawPct >= 100 ? 'text-green-600'
+                        : rawPct >= 75  ? 'text-yellow-600'
+                        : rawPct >= 50  ? 'text-orange-500'
+                        : 'text-red-500'
+
+                      return (
+                        <div key={m.id}>
+                          <div className="flex items-center justify-between mb-1.5">
+                            <span className="text-sm font-medium text-muted-foreground">{m.label}</span>
+                            <div className="flex items-center gap-2 text-xs">
+                              <span className={cn('font-black', textColor)}>
+                                {mtd !== null ? mtd.toLocaleString('en-IN') : '—'}
+                              </span>
+                              {effectiveMTgt !== null && (
+                                <span className="text-muted-foreground">/ {effectiveMTgt.toLocaleString('en-IN')}</span>
+                              )}
+                              {rawPct !== null && (
+                                <span className={cn('font-black w-10 text-right', textColor)}>{rawPct}%</span>
+                              )}
+                            </div>
+                          </div>
+                          <div className="h-2 bg-muted/40 rounded-full overflow-hidden">
+                            <div
+                              className={cn('h-full rounded-full transition-all', barColor)}
+                              style={{ width: `${pct ?? 0}%` }}
+                            />
+                          </div>
+                        </div>
+                      )
+                    })}
+                    {GOAL_METRICS.every(m => (monthlyTargets.find(t => t.metric_id === m.id)?.target_value ?? weeklyTargets.find(t => t.metric_id === m.id)?.target_value) === undefined) && (
+                      <p className="text-xs text-muted-foreground text-center py-2">Targets not set yet — ask your account manager.</p>
+                    )}
+                  </CardContent>
+                </Card>
               </div>
             )}
 
