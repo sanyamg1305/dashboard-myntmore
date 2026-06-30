@@ -321,7 +321,7 @@ function buildHighScoresSheet(
 export async function generateLifetimeExport(options: {
   upToDate: string          // inclusive end date (YYYY-MM-DD)
   fromDate?: string         // optional start date
-  clientId?: string         // optional — filter to one client
+  clientId?: string         // optional - filter to one client
 }) {
   const { upToDate, fromDate, clientId } = options
 
@@ -390,7 +390,7 @@ export async function generateLifetimeExport(options: {
 
   const wb = XLSX.utils.book_new()
 
-  // Sheet 1 — Client Weekly Data
+  // Sheet 1 - Client Weekly Data
   const clientRows = buildClientSheet(weeklyData ?? [], displayClients, healthScores ?? [])
   if (clientRows.length > 0) {
     const ws = XLSX.utils.json_to_sheet(clientRows)
@@ -398,7 +398,7 @@ export async function generateLifetimeExport(options: {
     XLSX.utils.book_append_sheet(wb, ws, 'Client Weekly Data')
   }
 
-  // Sheet 2 — Health Scores
+  // Sheet 2 - Health Scores
   const healthRows = buildHealthSheet(
     clientId
       ? (healthScores ?? []).filter(h => h.client_id === clientId)
@@ -411,7 +411,7 @@ export async function generateLifetimeExport(options: {
     XLSX.utils.book_append_sheet(wb, ws, 'Health Scores')
   }
 
-  // Sheet 3 — TJ Brand (not filtered by client)
+  // Sheet 3 - TJ Brand (not filtered by client)
   if (!clientId && (tjData ?? []).length > 0) {
     const tjRows = buildTjSheet(tjData ?? [])
     const ws = XLSX.utils.json_to_sheet(tjRows)
@@ -419,7 +419,7 @@ export async function generateLifetimeExport(options: {
     XLSX.utils.book_append_sheet(wb, ws, 'TJ Brand')
   }
 
-  // Sheet 4 — MM Content (not filtered by client)
+  // Sheet 4 - MM Content (not filtered by client)
   if (!clientId && (mmData ?? []).length > 0) {
     const mmRows = buildMmSheet(mmData ?? [])
     const ws = XLSX.utils.json_to_sheet(mmRows)
@@ -427,7 +427,7 @@ export async function generateLifetimeExport(options: {
     XLSX.utils.book_append_sheet(wb, ws, 'MM Content')
   }
 
-  // Sheet 5 — Sales (not filtered by client)
+  // Sheet 5 - Sales (not filtered by client)
   if (!clientId && (salesData ?? []).length > 0) {
     const salesRows = buildSalesSheet(salesData ?? [])
     const ws = XLSX.utils.json_to_sheet(salesRows)
@@ -435,7 +435,7 @@ export async function generateLifetimeExport(options: {
     XLSX.utils.book_append_sheet(wb, ws, 'Sales & Outreach')
   }
 
-  // Sheet 6 — Targets
+  // Sheet 6 - Targets
   const targetRows = buildTargetsSheet(targets ?? [], displayClients)
   if (targetRows.length > 0) {
     const ws = XLSX.utils.json_to_sheet(targetRows)
@@ -443,7 +443,7 @@ export async function generateLifetimeExport(options: {
     XLSX.utils.book_append_sheet(wb, ws, 'Targets')
   }
 
-  // Sheet 7 — High Scores
+  // Sheet 7 - High Scores
   const hsRows = buildHighScoresSheet(highScores ?? [], displayClients)
   if (hsRows.length > 0) {
     const ws = XLSX.utils.json_to_sheet(hsRows)
@@ -505,7 +505,7 @@ export async function generateWeeklySummary(weekStart: string) {
     supabase.from('sales_weekly_data').select('*').eq('week_start', weekStart).maybeSingle(),
   ])
 
-  let text = `MYNTMORE WEEKLY REVIEW — ${new Date(weekStart).toLocaleDateString()} – ${new Date(new Date(weekStart).getTime() + 6 * 24 * 60 * 60 * 1000).toLocaleDateString()}\n`
+  let text = `MYNTMORE WEEKLY REVIEW - ${new Date(weekStart).toLocaleDateString()} – ${new Date(new Date(weekStart).getTime() + 6 * 24 * 60 * 60 * 1000).toLocaleDateString()}\n`
   text += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`
   text += `CLIENT PERFORMANCE SNAPSHOT\n────────────────────────────\n`
 
@@ -537,12 +537,12 @@ export async function generateWeeklySummary(weekStart: string) {
   }
 
   text += `\n⚠️ ALERTS\n`
-  alerts?.forEach(alert => { text += `${(alert as any).clients?.name} — ${alert.alert_message}\n` })
+  alerts?.forEach(alert => { text += `${(alert as any).clients?.name} - ${alert.alert_message}\n` })
   if (!alerts || alerts.length === 0) text += `No active alerts.\n`
 
   text += `\n🏆 NEW RECORDS THIS WEEK\n`
   records?.forEach((record: any) => {
-    text += `${record.client_name} — ${record.metric_name}: ${record.lifetime_high} (prev best: ${record.previous_high || '-'})\n`
+    text += `${record.client_name} - ${record.metric_name}: ${record.lifetime_high} (prev best: ${record.previous_high || '-'})\n`
   })
   if (!records || records.length === 0) text += `No new records set.\n`
 

@@ -607,7 +607,7 @@ export function TeamSettingsPage() {
                       : <Badge variant="outline" className="text-muted-foreground">No access</Badge>}
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">
-                    {(c as any).user_id ? `${window.location.origin}/portal` : '—'}
+                    {(c as any).user_id ? `${window.location.origin}/portal` : '-'}
                   </TableCell>
                   <TableCell className="text-right">
                     {(c as any).user_id && (
@@ -644,7 +644,7 @@ export function TeamSettingsPage() {
                 <SelectTrigger><SelectValue placeholder="Select client to link" /></SelectTrigger>
                 <SelectContent>
                   {clients.filter(c => !(c as any).user_id).map(c => (
-                    <SelectItem key={c.id} value={c.id}>{c.name} — {c.company}</SelectItem>
+                    <SelectItem key={c.id} value={c.id}>{c.name} - {c.company}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>

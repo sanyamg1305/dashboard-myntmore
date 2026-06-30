@@ -25,7 +25,7 @@ export function CampaignMonthTable({ campaign, monthWeeks, onEdit, onWeekSaved, 
   ]
 
   const getVal = (weekData: any, key: string): string => {
-    if (!weekData) return '—'
+    if (!weekData) return '-'
     if (key === '_acc') {
       const s = weekData.conn_requests_sent, a = weekData.accepted
       return fmtRate(calcRateCapped(a, s))
@@ -135,7 +135,7 @@ export function CampaignMonthTable({ campaign, monthWeeks, onEdit, onWeekSaved, 
                         <td key={w.weekStart} style={{
                           padding: '8px', textAlign: 'center', fontSize: '13px',
                           fontWeight: w.isSelected ? '700' : '400',
-                          color: val === '—' ? '#DDD' : row.calc ? '#666' : row.key === 'hot_leads' ? '#D97706' : '#000',
+                          color: val === '-' ? '#DDD' : row.calc ? '#666' : row.key === 'hot_leads' ? '#D97706' : '#000',
                           background: w.isSelected ? '#FFFBF0' : 'transparent',
                         }}>
                           {val}

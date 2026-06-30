@@ -52,7 +52,7 @@ const _syncAllCampaignTotalsInner = async (clientId: string, weekStart: string) 
 
   const current = (existing?.leadgen_metrics as Record<string, any>) ?? {}
 
-  // Merge — only update numeric fields, keep text/qualitative untouched
+  // Merge - only update numeric fields, keep text/qualitative untouched
   const merged = {
     ...current,
     L10: { ...(typeof current.L10 === 'object' ? current.L10 : {}), value: connReq },

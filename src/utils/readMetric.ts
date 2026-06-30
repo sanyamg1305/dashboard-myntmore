@@ -61,20 +61,20 @@ export function readBool(
 }
 
 export function fmt(val: number | null): string {
-  if (val === null || val === undefined) return '—'
+  if (val === null || val === undefined) return '-'
   if (val === 0) return '0'
   if (val >= 1000) return val.toLocaleString('en-IN')
-  // Small numbers — show as integer (no decimal for counts)
+  // Small numbers - show as integer (no decimal for counts)
   return String(Math.round(val))
 }
 
 export function fmtPct(num: number | null, den: number | null): string {
-  if (num === null || den === null || den === 0) return '—'
+  if (num === null || den === null || den === 0) return '-'
   const rate = calcRateCapped(num, den)
   return fmtRate(rate)
 }
 
-// Safe percentage — caps at 100% for rates that can't exceed 100%
+// Safe percentage - caps at 100% for rates that can't exceed 100%
 export function calcRateCapped(
   numerator: number | null,
   denominator: number | null
@@ -82,13 +82,13 @@ export function calcRateCapped(
   if (numerator === null || denominator === null || denominator === 0) return null
   if (numerator < 0 || denominator < 0) return null
   const rate = (numerator / denominator) * 100
-  // Cap at 100% — if numerator > denominator something is wrong with the data
+  // Cap at 100% - if numerator > denominator something is wrong with the data
   // return null rather than an impossible number
   if (rate > 100) return null
   return Math.round(rate * 10) / 10  // 1 decimal place
 }
 
-// Uncapped percentage — for positive response rate etc
+// Uncapped percentage - for positive response rate etc
 export function calcRateUncapped(
   numerator: number | null,
   denominator: number | null
@@ -98,7 +98,7 @@ export function calcRateUncapped(
   return Math.round((numerator / denominator) * 100 * 10) / 10
 }
 
-// Safe delta — rounds to 1 decimal and handles floating point
+// Safe delta - rounds to 1 decimal and handles floating point
 export function calcDelta(
   current: number | null,
   previous: number | null
@@ -107,16 +107,16 @@ export function calcDelta(
   return Math.round((current - previous) * 10) / 10
 }
 
-// Format a rate for display — shows — if null
+// Format a rate for display - shows - if null
 export function fmtRate(val: number | null): string {
-  if (val === null || val === undefined) return '—'
+  if (val === null || val === undefined) return '-'
   return val.toFixed(1) + '%'
 }
 
 // Format delta with + or - sign
 export function fmtDelta(current: number | null, previous: number | null): string {
   const d = calcDelta(current, previous)
-  if (d === null) return '—'
+  if (d === null) return '-'
   const rounded = Math.round(d * 10) / 10
   if (rounded === 0) return '0'
   return (rounded > 0 ? '+' : '') + rounded.toFixed(1)
@@ -132,11 +132,11 @@ export function deltaColor(current: number | null, previous: number | null): str
 }
 
 export function formatWeekDate(dateStr: string | null | undefined): string {
-  if (!dateStr) return '—'
+  if (!dateStr) return '-'
   try {
     const d = new Date(dateStr + 'T00:00:00')
     return `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()}`
-  } catch { return dateStr ?? '—' }
+  } catch { return dateStr ?? '-' }
 }
 
 export function readSalesNum(

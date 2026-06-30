@@ -15,31 +15,31 @@ export function calculateHealthScore(
   const pct = (actual: number, tgt: number) => 
     tgt > 0 ? Math.min((actual / tgt) * 100, 100) : 0
 
-  // Acceptance Rate — 20 points
+  // Acceptance Rate - 20 points
   const acceptanceRate = get(leadgenMetrics, 'L12')
   const acceptanceScore = Math.min(acceptanceRate, 100) * 0.20
 
-  // Positive Replies Achievement — 25 points
+  // Positive Replies Achievement - 25 points
   const positiveReplies = get(leadgenMetrics, 'L15')
   const positiveTarget = target('L15')
   const positiveScore = pct(positiveReplies, positiveTarget) * 0.25
 
-  // Meetings Booked Achievement — 20 points
+  // Meetings Booked Achievement - 20 points
   const meetings = get(leadgenMetrics, 'L24')
   const meetingsTarget = target('L24')
   const meetingsScore = pct(meetings, meetingsTarget) * 0.20
 
-  // Posts Published Achievement — 15 points
+  // Posts Published Achievement - 15 points
   const posts = get(contentMetrics, 'C09')
   const postsTarget = target('C09')
   const postsScore = pct(posts, postsTarget) * 0.15
 
-  // Impressions Achievement — 10 points
+  // Impressions Achievement - 10 points
   const impressions = get(contentMetrics, 'C10')
   const impressionsTarget = target('C10')
   const impressionsScore = pct(impressions, impressionsTarget) * 0.10
 
-  // Happiness Index — 10 points (0–10 scale → 0–100)
+  // Happiness Index - 10 points (0–10 scale → 0–100)
   const happiness = get(leadgenMetrics, 'L30')
   const happinessScore = (happiness / 10) * 100 * 0.10
 
@@ -146,7 +146,7 @@ export async function calculateStreaks(clientId: string, weekStart: string) {
         else break
     }
 
-    // Posts on target streak — consecutive weeks where C09 actual >= C09 weekly target
+    // Posts on target streak - consecutive weeks where C09 actual >= C09 weekly target
     const { data: weeklyData } = await supabase
         .from('weekly_data')
         .select('week_start, content_metrics')

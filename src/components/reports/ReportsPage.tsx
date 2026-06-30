@@ -278,18 +278,18 @@ export function ReportsPage() {
                                 val !== null ? cn(achTextColor(pct), achBgColor(pct)) : 'text-muted-foreground/40'
                               )}
                             >
-                              {val !== null ? formatDashboardValue(val, m.id) : '—'}
+                              {val !== null ? formatDashboardValue(val, m.id) : '-'}
                             </TableCell>
                           )
                         })}
                         <TableCell className="py-1 text-center text-xs font-black bg-amber-50/60 tabular-nums">
-                          {total !== null ? formatDashboardValue(total, m.id) : '—'}
+                          {total !== null ? formatDashboardValue(total, m.id) : '-'}
                         </TableCell>
                         <TableCell className="py-1 text-center text-xs font-bold bg-amber-50/60 tabular-nums">
-                          {avg !== null ? formatDashboardValue(Math.round(avg * 10) / 10, m.id) : '—'}
+                          {avg !== null ? formatDashboardValue(Math.round(avg * 10) / 10, m.id) : '-'}
                         </TableCell>
                         <TableCell className="py-1 text-center text-xs text-muted-foreground tabular-nums">
-                          {tgt !== null ? formatDashboardValue(tgt, m.id) : '—'}
+                          {tgt !== null ? formatDashboardValue(tgt, m.id) : '-'}
                         </TableCell>
                       </TableRow>
                     )
@@ -407,7 +407,7 @@ export function ReportsPage() {
                 const avg = total / numVals.length
                 const best = Math.max(...numVals)
                 const bestWeekIdx = values.findIndex(v => v === best)
-                const bestWeek = bestWeekIdx >= 0 ? fmtWeekShort(weekList[bestWeekIdx]) : '—'
+                const bestWeek = bestWeekIdx >= 0 ? fmtWeekShort(weekList[bestWeekIdx]) : '-'
                 const tgt = getTarget(clientId, m.id)
                 const avgAch = tgt ? Math.round((avg / tgt) * 100) : null
                 const badge = achBadge(avgAch)

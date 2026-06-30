@@ -107,7 +107,7 @@ export function TJChannelAssignmentsTab() {
   return (
     <div className="space-y-6">
       <div className="space-y-1">
-        <h3 className="text-sm font-black tracking-widest uppercase">TJ Personal Brand — Channel Assignments</h3>
+        <h3 className="text-sm font-black tracking-widest uppercase">TJ Personal Brand - Channel Assignments</h3>
         <p className="text-sm text-muted-foreground">
           Assign a team member responsible for each channel. They will be shown as the owner in Monday Mode and the TJ Personal Brand page.
         </p>

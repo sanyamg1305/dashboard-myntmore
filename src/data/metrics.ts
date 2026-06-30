@@ -6,7 +6,7 @@ export interface Metric {
   type: MetricType
   category: 'content' | 'leadgen'
   group: string        // section heading e.g. 'Production Pipeline'
-  autoFormula?: string // e.g. 'C06+C07+C08' — resolved at render time
+  autoFormula?: string // e.g. 'C06+C07+C08' - resolved at render time
   dependsOn?: string[] // metric IDs needed for auto-calc
   hasTarget: boolean   // whether this metric has a target field
   hasNote: boolean     // whether this metric has an inline note field

@@ -518,7 +518,7 @@ export function SalesOutreachPage({ embedded }: { embedded?: boolean } = {}) {
 
                 {/* Cold Email Section */}
                 <AccordionItem value="email" className="border rounded-lg bg-card overflow-hidden">
-                  <AccordionTrigger className="px-4 py-3 hover:bg-muted/30 hover:no-underline font-bold text-lg">Cold Email — Waalaxy (Myntmore Internal)</AccordionTrigger>
+                  <AccordionTrigger className="px-4 py-3 hover:bg-muted/30 hover:no-underline font-bold text-lg">Cold Email - Waalaxy (Myntmore Internal)</AccordionTrigger>
                   <AccordionContent className="p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div className="space-y-1.5">
                       <Label className="text-xs font-bold uppercase opacity-60">SO29 - Emails Sent</Label>

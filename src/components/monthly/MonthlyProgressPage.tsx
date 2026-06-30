@@ -55,7 +55,7 @@ function weeksElapsed(weekStarts: string[]): number {
 }
 
 function fmt(v: number | null): string {
-  if (v === null) return '—'
+  if (v === null) return '-'
   if (v >= 1_000) return v.toLocaleString('en-IN')
   return String(Math.round(v * 10) / 10)
 }
@@ -143,7 +143,7 @@ function MetricRow({ metricId, metricName, target, actual, weeklyActuals, weekSt
 
         {/* % */}
         <div className="w-12 text-right shrink-0 tabular-nums text-sm font-bold text-gray-600">
-          {actual !== null ? `${Math.round((actual / target) * 100)}%` : '—'}
+          {actual !== null ? `${Math.round((actual / target) * 100)}%` : '-'}
         </div>
 
         {/* Status badge */}
@@ -170,7 +170,7 @@ function MetricRow({ metricId, metricName, target, actual, weeklyActuals, weekSt
                   'text-sm font-black tabular-nums',
                   v === null ? 'text-gray-300' : v > 0 ? 'text-gray-800' : 'text-gray-400'
                 )}>
-                  {v !== null ? fmt(v) : '—'}
+                  {v !== null ? fmt(v) : '-'}
                 </span>
               </div>
             )

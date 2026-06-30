@@ -104,7 +104,7 @@ function DeliverableAlertRow({ item, displayWeek }: { item: DeliverableAlertItem
                   />
                 </div>
                 <span className={cn('text-[9px] font-bold tabular-nums', pctColor(m.pct))}>
-                  {m.pct !== null ? `${m.pct}%` : '—'}
+                  {m.pct !== null ? `${m.pct}%` : '-'}
                 </span>
               </div>
             </div>
@@ -176,7 +176,7 @@ export function DashboardPage() {
       .eq('status', 'active')
   
     clients?.forEach(client => {
-      // Birthday check — 21 days ahead
+      // Birthday check - 21 days ahead
       if (client.birthday) {
         const daysUntil = getDaysUntilNextOccurrence(client.birthday, today)
         if (daysUntil >= 0 && daysUntil <= 21) {
@@ -197,7 +197,7 @@ export function DashboardPage() {
         }
       }
   
-      // Work anniversary check — 21 days ahead
+      // Work anniversary check - 21 days ahead
       if (client.myntmore_start_date) {
         const start = new Date(client.myntmore_start_date)
         const daysUntil = getDaysUntilNextOccurrence(client.myntmore_start_date, today)
@@ -354,7 +354,7 @@ export function DashboardPage() {
             if (target && currentNum !== null) {
               achNum = Math.round((currentNum / Number(target)) * 100)
             }
-            const ach = target !== null ? formatMetricValue(target, m.id) : '—'
+            const ach = target !== null ? formatMetricValue(target, m.id) : '-'
 
             const achColor = (n: number | null) => n === null ? ''
               : n >= 100 ? 'text-green-600'
@@ -372,7 +372,7 @@ export function DashboardPage() {
             if (monthlyTarget && mtdVal !== null) {
               moAchNum = Math.round((mtdVal / Number(monthlyTarget)) * 100)
             }
-            const moAch = monthlyTarget !== null ? formatMetricValue(monthlyTarget, m.id) : '—'
+            const moAch = monthlyTarget !== null ? formatMetricValue(monthlyTarget, m.id) : '-'
 
             return (
               <TableRow key={m.id} className="h-8">
@@ -399,7 +399,7 @@ export function DashboardPage() {
                         </span>
                       </button>
                     ) : (
-                      <span className="text-xs text-muted-foreground">—</span>
+                      <span className="text-xs text-muted-foreground">-</span>
                     )}
                   </TableCell>
                 ) : (
@@ -430,13 +430,13 @@ export function DashboardPage() {
                       style={{ color: bestEver !== null ? '#B8860B' : undefined }}
                       title={hs?.achieved_week ? `Achieved: w/c ${new Date(hs.achieved_week).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}` : undefined}
                     >
-                      {bestEver !== null ? (['L12', 'L14', 'L17'].includes(m.id) ? formatPct(bestEver as number) : formatDashboardValue(bestEver, m.id)) : '—'}
+                      {bestEver !== null ? (['L12', 'L14', 'L17'].includes(m.id) ? formatPct(bestEver as number) : formatDashboardValue(bestEver, m.id)) : '-'}
                     </TableCell>
                     <TableCell
                       className="py-1 text-center text-xs font-bold text-amber-600 cursor-help"
                       title={hs?.achieved_month ? `Achieved: ${new Date(hs.achieved_month + '-01').toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}` : undefined}
                     >
-                      {bestEverMonth !== null ? (['L12', 'L14', 'L17'].includes(m.id) ? formatPct(bestEverMonth as number) : formatDashboardValue(bestEverMonth, m.id)) : '—'}
+                      {bestEverMonth !== null ? (['L12', 'L14', 'L17'].includes(m.id) ? formatPct(bestEverMonth as number) : formatDashboardValue(bestEverMonth, m.id)) : '-'}
                     </TableCell>
                   </>
                 )}
@@ -510,7 +510,7 @@ export function DashboardPage() {
                     )
                   })}
                   <TableCell className="py-1 text-center text-[11px] font-black bg-gold/5">
-                    {['L12', 'L14', 'L17'].includes(m.id) ? '—' : formatDashboardValue(monthlyTotals[m.id], m.id)}
+                    {['L12', 'L14', 'L17'].includes(m.id) ? '-' : formatDashboardValue(monthlyTotals[m.id], m.id)}
                   </TableCell>
                 </TableRow>
               )
@@ -585,7 +585,7 @@ export function DashboardPage() {
           return (
             <Card key={client.id} className="border shadow-sm overflow-hidden">
               <CardHeader className="bg-muted/10 py-3 border-b">
-                <CardTitle className="text-sm font-black uppercase tracking-widest">{client.name} — Monthly Comparison</CardTitle>
+                <CardTitle className="text-sm font-black uppercase tracking-widest">{client.name} - Monthly Comparison</CardTitle>
               </CardHeader>
               <CardContent className="p-0">
                 <Table>
@@ -766,7 +766,7 @@ export function DashboardPage() {
       setProcessesData(pData || [])
       setProcessesUpdates(pUpdates || [])
 
-      // Backfill high scores for all clients — scans full history and self-heals stale/missing records
+      // Backfill high scores for all clients - scans full history and self-heals stale/missing records
       Promise.all(
         (clientsData || []).map((c: any) => backfillHighScores(c.id))
       ).then(async () => {
@@ -812,7 +812,7 @@ export function DashboardPage() {
     }
   }, [session, displayWeek])
 
-  // --- Deliverable gap alerts — must be declared BEFORE early returns (Rules of Hooks) ---
+  // --- Deliverable gap alerts - must be declared BEFORE early returns (Rules of Hooks) ---
   const deliverableAlerts = useMemo(() => {
     if (!clients.length || !displayWeek) return []
 
@@ -945,7 +945,7 @@ export function DashboardPage() {
               <div className="flex justify-between items-end border-b pb-6">
                 <div>
                   <h1 className="text-4xl font-black tracking-tight">MYNTMORE COMMAND CENTER</h1>
-                  <p className="text-muted-foreground font-medium uppercase tracking-widest text-xs mt-1">Operational Performance Dashboard — {getWeekLabel(displayWeek)}</p>
+                  <p className="text-muted-foreground font-medium uppercase tracking-widest text-xs mt-1">Operational Performance Dashboard - {getWeekLabel(displayWeek)}</p>
                 </div>
                 <div className="flex items-center gap-6">
                   <div className="flex items-center gap-2">
@@ -991,9 +991,9 @@ export function DashboardPage() {
                         <div className="space-y-4">
                           {notifications.map(notif => {
                             const getBorderColor = (severity: string) => {
-                              if (severity === 'high') return '#EF4444'   // red — within 3 days
-                              if (severity === 'medium') return '#EAB308' // amber — within 7 days
-                              return '#FFC947'                             // gold — within 21 days
+                              if (severity === 'high') return '#EF4444'   // red - within 3 days
+                              if (severity === 'medium') return '#EAB308' // amber - within 7 days
+                              return '#FFC947'                             // gold - within 21 days
                             }
                             return (
                             <div key={notif.id} className="p-4 rounded-xl border bg-card hover:border-gold/30 transition-all group relative">
@@ -1045,7 +1045,7 @@ export function DashboardPage() {
                 </div>
               </div>
 
-              {/* Section 2 — Active Alerts Panel */}
+              {/* Section 2 - Active Alerts Panel */}
               {alerts.length > 0 && (
                 <Card className="border-2 border-red-100 shadow-sm overflow-hidden bg-red-50/20">
                     <CardHeader
@@ -1074,7 +1074,7 @@ export function DashboardPage() {
                                           alert.severity === 'high' ? "bg-red-500 animate-pulse" : "bg-amber-500"
                                       )} />
                                       <p className="text-xs font-bold text-red-950">
-                                          <span className="opacity-60 mr-2">{alert.clients?.name} —</span>
+                                          <span className="opacity-60 mr-2">{alert.clients?.name} -</span>
                                           {alert.alert_message}
                                       </p>
                                   </div>
@@ -1086,7 +1086,7 @@ export function DashboardPage() {
                 </Card>
               )}
 
-              {/* Section 3 — Deliverables Check */}
+              {/* Section 3 - Deliverables Check */}
               {deliverableAlerts.length > 0 && (
                 <Card className="border-2 border-amber-100 shadow-sm overflow-hidden bg-amber-50/20">
                   <CardHeader className="bg-amber-50 py-2 border-b border-amber-100 flex-row items-center justify-between">
@@ -1193,7 +1193,7 @@ export function DashboardPage() {
                                       </div>
                                       <div className="text-center w-14 shrink-0">
                                         <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">Acc Rate</p>
-                                        <p className={cn("text-sm font-black", acceptanceRate !== null && acceptanceRate !== undefined ? "text-foreground" : "text-muted-foreground")}>{acceptanceRate !== null && acceptanceRate !== undefined ? formatPct(acceptanceRate as number) : '—'}</p>
+                                        <p className={cn("text-sm font-black", acceptanceRate !== null && acceptanceRate !== undefined ? "text-foreground" : "text-muted-foreground")}>{acceptanceRate !== null && acceptanceRate !== undefined ? formatPct(acceptanceRate as number) : '-'}</p>
                                       </div>
                                       <div className="text-center w-14 shrink-0">
                                         <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">Hot Leads</p>
@@ -1520,7 +1520,7 @@ export function DashboardPage() {
                                 ].map((m, i) => (
                                   <div key={i} className="space-y-1">
                                     <p className="text-[10px] font-bold text-muted-foreground uppercase">{m.label}</p>
-                                    <p className="text-lg font-black">{m.val === null ? '—' : m.fmt === 'pct' ? `${m.val}%` : fmt(m.val)}</p>
+                                    <p className="text-lg font-black">{m.val === null ? '-' : m.fmt === 'pct' ? `${m.val}%` : fmt(m.val)}</p>
                                   </div>
                                 ))}
                               </div>
@@ -1554,7 +1554,7 @@ export function DashboardPage() {
                                   <div key={i} className="space-y-1">
                                     <p className="text-[10px] font-bold text-muted-foreground uppercase">{m.label}</p>
                                     <p className="text-lg font-black">
-                                      {m.val === null ? '—' : m.fmt === 'pct' ? `${m.val}%` : m.fmt === 'inr' ? fmt(m.val, '₹') : fmt(m.val)}
+                                      {m.val === null ? '-' : m.fmt === 'pct' ? `${m.val}%` : m.fmt === 'inr' ? fmt(m.val, '₹') : fmt(m.val)}
                                     </p>
                                   </div>
                                 ))}
@@ -1792,7 +1792,7 @@ function AhaMomentsAdmin({ clientId }: { clientId: string }) {
             ))}
           </div>
           <input
-            placeholder="Title — e.g. First meeting booked! 🏆"
+            placeholder="Title - e.g. First meeting booked! 🏆"
             value={title} onChange={e => setTitle(e.target.value)}
             className="w-full border rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-gold/40"
           />

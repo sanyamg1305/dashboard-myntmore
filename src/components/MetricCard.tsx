@@ -163,12 +163,12 @@ export function MetricCard({
                 <span>
                   W.Target: {weeklyTarget
                     ? <strong style={{ color: '#000' }}>{weeklyTarget}</strong>
-                    : <span style={{ color: '#ccc' }}>—</span>}
+                    : <span style={{ color: '#ccc' }}>-</span>}
                 </span>
                 <span>
                   M.Target: {monthlyTarget
                     ? <strong style={{ color: '#000' }}>{monthlyTarget}</strong>
-                    : <span style={{ color: '#ccc' }}>—</span>}
+                    : <span style={{ color: '#ccc' }}>-</span>}
                 </span>
               </div>
             </div>
@@ -190,7 +190,7 @@ export function MetricCard({
           <div className="flex items-center gap-1">
             <span>← Previous:</span>
             <span className="font-bold text-foreground">{previousValue ?? '-'}</span>
-            {deltaFormat && deltaFormat.text !== '—' && (
+            {deltaFormat && deltaFormat.text !== '-' && (
               <span className={cn(
                 "font-bold ml-1",
                 deltaFormat.isPositive ? "text-status-on" : "text-status-off"

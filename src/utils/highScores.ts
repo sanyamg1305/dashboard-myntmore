@@ -53,7 +53,7 @@ export async function backfillHighScores(clientId: string): Promise<void> {
         if (!best[id] || val > best[id].value) {
           best[id] = { value: val, week: weekStart, name }
         }
-        // C26 is an average, not summable across weeks — skip it for monthly totals
+        // C26 is an average, not summable across weeks - skip it for monthly totals
         if (id !== 'C26') addToMonth(month, id, val)
       }
     })
@@ -93,7 +93,7 @@ export async function backfillHighScores(clientId: string): Promise<void> {
       bestMonth['L17'] = { value: posRate, month }
   }
 
-  // Always overwrite with truth from weekly_data — this corrects any stale/garbage entries
+  // Always overwrite with truth from weekly_data - this corrects any stale/garbage entries
   // First delete ALL existing high_scores for this client, then re-insert only what's real
   await supabase.from('high_scores').delete().eq('client_id', clientId)
 

@@ -102,7 +102,7 @@ export function useAutoSave(options: AutoSaveOptions) {
     }
   }, [table, matchColumns, onSaveSuccess, onSaveError])
 
-  // Debounced trigger — call this whenever form data changes
+  // Debounced trigger - call this whenever form data changes
   const triggerSave = useCallback((data: Record<string, any>) => {
     setPendingData(data)
     setSaveStatus('saving') // show saving indicator immediately
@@ -127,7 +127,7 @@ export function useAutoSave(options: AutoSaveOptions) {
     }
   }, [])
 
-  // Save on page unload — uses fetch with keepalive (supports auth headers, unlike sendBeacon)
+  // Save on page unload - uses fetch with keepalive (supports auth headers, unlike sendBeacon)
   useEffect(() => {
     const handleUnload = () => {
       if (!pendingData || !_cachedAccessToken) return

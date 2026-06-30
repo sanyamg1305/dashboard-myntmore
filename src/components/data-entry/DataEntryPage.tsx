@@ -226,8 +226,8 @@ export function DataEntryPage() {
           const updated = payload.new as any
           if (updated?.week_start !== selectedWeek) return
           // Refresh if:
-          //  a) we have never saved (contentLastSaved is null) — catches campaign syncs
-          //  b) the DB row is newer than our last save — catches team-member edits
+          //  a) we have never saved (contentLastSaved is null) - catches campaign syncs
+          //  b) the DB row is newer than our last save - catches team-member edits
           const isNewer = !contentLastSaved || updated.updated_at > contentLastSaved.toISOString()
           if (isNewer) {
             fetchData()
@@ -321,7 +321,7 @@ export function DataEntryPage() {
       }
 
       // Every save (draft or submit) marks the data as submitted so it shows
-      // on the dashboard immediately — there's no separate review/approval step.
+      // on the dashboard immediately - there's no separate review/approval step.
       if (activeTab === 'content') {
         payload.content_metrics = contentMetrics
         payload.content_submitted_at = new Date().toISOString()
@@ -844,7 +844,7 @@ export function DataEntryPage() {
         <Card className="border-gold/40 bg-gold/5">
           <CardHeader className="py-3 border-b border-gold/20">
             <CardTitle className="text-xs font-black uppercase tracking-widest flex items-center gap-2">
-              📋 Legacy Data — Pre-Campaign Format
+              📋 Legacy Data - Pre-Campaign Format
             </CardTitle>
           </CardHeader>
           <CardContent className="p-4 space-y-3">
@@ -856,7 +856,7 @@ export function DataEntryPage() {
                 let display: any = readLegacy(m.id)
                 if (m.calc === 'acc') display = fmtRate(calcRateCapped(L11, L10))
                 else if (m.calc === 'resp') display = fmtRate(calcRateCapped(L13, L11))
-                else display = display === null || display === undefined || display === '' ? '—' : display
+                else display = display === null || display === undefined || display === '' ? '-' : display
                 return (
                   <div key={m.id} className="text-center">
                     <div className="text-[10px] text-muted-foreground uppercase font-bold">{m.label}</div>
@@ -896,7 +896,7 @@ export function DataEntryPage() {
                                     <Label className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">Messages Sent</Label>
                                     <Input
                                         type="number"
-                                        placeholder="—"
+                                        placeholder="-"
                                         value={existingConnSent}
                                         onChange={(e) => handleExistingConnChange('sent', e.target.value)}
                                         className="h-10"
@@ -906,7 +906,7 @@ export function DataEntryPage() {
                                     <Label className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">Replies</Label>
                                     <Input
                                         type="number"
-                                        placeholder="—"
+                                        placeholder="-"
                                         value={existingConnReplied}
                                         onChange={(e) => handleExistingConnChange('replied', e.target.value)}
                                         className="h-10"
@@ -916,7 +916,7 @@ export function DataEntryPage() {
                                     <Label className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">Existing Connections Hot Leads</Label>
                                     <Input
                                         type="number"
-                                        placeholder="—"
+                                        placeholder="-"
                                         value={existingConnHotLeads}
                                         onChange={(e) => handleExistingConnChange('hotLeads', e.target.value)}
                                         className="h-10"
@@ -961,7 +961,7 @@ export function DataEntryPage() {
                                     <Label className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">InMails Sent</Label>
                                     <Input
                                         type="number"
-                                        placeholder="—"
+                                        placeholder="-"
                                         value={inmailSent}
                                         onChange={(e) => handleInmailChange('sent', e.target.value)}
                                         className="h-10"
@@ -971,7 +971,7 @@ export function DataEntryPage() {
                                     <Label className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">InMails Accepted</Label>
                                     <Input
                                         type="number"
-                                        placeholder="—"
+                                        placeholder="-"
                                         value={inmailAccepted}
                                         onChange={(e) => handleInmailChange('accepted', e.target.value)}
                                         className="h-10"
@@ -981,7 +981,7 @@ export function DataEntryPage() {
                                     <Label className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">InMails Declined</Label>
                                     <Input
                                         type="number"
-                                        placeholder="—"
+                                        placeholder="-"
                                         value={inmailDeclined}
                                         onChange={(e) => handleInmailChange('declined', e.target.value)}
                                         className="h-10"
@@ -991,7 +991,7 @@ export function DataEntryPage() {
                                     <Label className="text-[10px] font-bold uppercase text-muted-foreground tracking-wider">InMail Hot Leads</Label>
                                     <Input
                                         type="number"
-                                        placeholder="—"
+                                        placeholder="-"
                                         value={inmailHotLeads}
                                         onChange={(e) => handleInmailChange('hotLeads', e.target.value)}
                                         className="h-10"
@@ -1041,7 +1041,7 @@ export function DataEntryPage() {
                     + Add Campaign Data for This Week
                   </Button>
                   <span className="text-xs text-muted-foreground">
-                    You can add campaigns alongside legacy data — they won't overwrite each other.
+                    You can add campaigns alongside legacy data - they won't overwrite each other.
                   </span>
                 </div>
               </>
@@ -1157,11 +1157,11 @@ export function DataEntryPage() {
                                                 <div className="grid grid-cols-2 gap-2">
                                                     <div className="space-y-1">
                                                         <Label className="text-[9px] uppercase">Conn Sent</Label>
-                                                        <Input type="number" placeholder="—" value={data.conn_requests_sent ?? ''} onChange={(e) => handleCampaignChange(campaign.id, 'conn_requests_sent', e.target.value)} />
+                                                        <Input type="number" placeholder="-" value={data.conn_requests_sent ?? ''} onChange={(e) => handleCampaignChange(campaign.id, 'conn_requests_sent', e.target.value)} />
                                                     </div>
                                                     <div className="space-y-1">
                                                         <Label className="text-[9px] uppercase">Accepted</Label>
-                                                        <Input type="number" placeholder="—" value={data.accepted ?? ''} onChange={(e) => handleCampaignChange(campaign.id, 'accepted', e.target.value)} />
+                                                        <Input type="number" placeholder="-" value={data.accepted ?? ''} onChange={(e) => handleCampaignChange(campaign.id, 'accepted', e.target.value)} />
                                                     </div>
                                                 </div>
                                                 <p className="text-[10px] font-bold text-gold">Acceptance Rate: {fmtRate(accRate)}</p>
@@ -1172,15 +1172,15 @@ export function DataEntryPage() {
                                                 <div className="grid grid-cols-3 gap-2">
                                                     <div className="space-y-1">
                                                         <Label className="text-[9px] uppercase">Answered</Label>
-                                                        <Input type="number" placeholder="—" value={data.answered ?? ''} onChange={(e) => handleCampaignChange(campaign.id, 'answered', e.target.value)} />
+                                                        <Input type="number" placeholder="-" value={data.answered ?? ''} onChange={(e) => handleCampaignChange(campaign.id, 'answered', e.target.value)} />
                                                     </div>
                                                     <div className="space-y-1">
                                                         <Label className="text-[9px] uppercase">Positive</Label>
-                                                        <Input type="number" placeholder="—" value={data.positive_replies ?? ''} onChange={(e) => handleCampaignChange(campaign.id, 'positive_replies', e.target.value)} />
+                                                        <Input type="number" placeholder="-" value={data.positive_replies ?? ''} onChange={(e) => handleCampaignChange(campaign.id, 'positive_replies', e.target.value)} />
                                                     </div>
                                                     <div className="space-y-1">
                                                         <Label className="text-[9px] uppercase">Negative</Label>
-                                                        <Input type="number" placeholder="—" value={data.negative_replies ?? ''} onChange={(e) => handleCampaignChange(campaign.id, 'negative_replies', e.target.value)} />
+                                                        <Input type="number" placeholder="-" value={data.negative_replies ?? ''} onChange={(e) => handleCampaignChange(campaign.id, 'negative_replies', e.target.value)} />
                                                     </div>
                                                 </div>
                                                 <p className="text-[10px] font-bold text-gold">Response Rate: {fmtRate(respRate)}</p>
@@ -1191,7 +1191,7 @@ export function DataEntryPage() {
                                                 <div className="grid grid-cols-1 gap-2">
                                                     <div className="space-y-1">
                                                         <Label className="text-[9px] uppercase">Meetings</Label>
-                                                        <Input type="number" placeholder="—" value={data.meetings_booked ?? ''} onChange={(e) => handleCampaignChange(campaign.id, 'meetings_booked', e.target.value)} />
+                                                        <Input type="number" placeholder="-" value={data.meetings_booked ?? ''} onChange={(e) => handleCampaignChange(campaign.id, 'meetings_booked', e.target.value)} />
                                                     </div>
                                                 </div>
                                             </div>
@@ -1591,7 +1591,7 @@ export function DataEntryPage() {
                 <SelectValue placeholder="Choose client" />
               </SelectTrigger>
               <SelectContent>
-                {clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name} — {c.company}</SelectItem>)}
+                {clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name} - {c.company}</SelectItem>)}
               </SelectContent>
             </Select>
           </div>

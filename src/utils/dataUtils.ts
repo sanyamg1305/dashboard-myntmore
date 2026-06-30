@@ -39,7 +39,7 @@ export function readNum(metrics: any, metricId: string): number | null {
 }
 
 export function formatDashboardValue(val: any, metricId: string): string {
-  if (val === null || val === undefined || val === '') return '—'
+  if (val === null || val === undefined || val === '') return '-'
   if (typeof val === 'boolean') return val ? '✅' : '❌'
   const n = Number(val)
   if (isNaN(n)) return String(val)
@@ -105,7 +105,7 @@ export function readMetric(
 }
 
 export function formatMetricValue(val: any, metricId: string): string {
-  if (val === null || val === undefined || val === '') return '—'
+  if (val === null || val === undefined || val === '') return '-'
   
   // Percentage metrics
   const pctMetrics = ['L12','L14','L17','L18','L21','L26','L30','L34','L05', 'C05'] // Added C05 just in case, but user specified some L codes. Wait, let's stick to user's list.
@@ -139,7 +139,7 @@ export function mt(
 }
 
 export function fmt(val: number | null, unit?: '%' | '₹' | 'K' | 'hrs'): string {
-  if (val === null || val === undefined) return '—'
+  if (val === null || val === undefined) return '-'
   if (unit === '%') return val.toFixed(1) + '%'
   if (unit === '₹') return '₹' + val.toLocaleString('en-IN')
   if (unit === 'hrs') return val + ' hrs'
@@ -148,7 +148,7 @@ export function fmt(val: number | null, unit?: '%' | '₹' | 'K' | 'hrs'): strin
 }
 
 export function delta(current: number | null, prev: number | null): string {
-  if (current === null || prev === null) return '—'
+  if (current === null || prev === null) return '-'
   const d = current - prev
   return (d > 0 ? '+' : '') + d
 }

@@ -69,7 +69,7 @@ export function AutoSaveBar({ status, lastSavedAt }: AutoSaveBarProps) {
         <>
           <span style={{ color: '#EF4444', fontSize: '14px' }}>⚠</span>
           <span style={{ color: '#EF4444', fontWeight: '600' }}>Save failed</span>
-          <span style={{ color: '#999', marginLeft: '4px' }}>— check your connection</span>
+          <span style={{ color: '#999', marginLeft: '4px' }}>- check your connection</span>
         </>
       )}
 

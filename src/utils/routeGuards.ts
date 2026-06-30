@@ -7,7 +7,7 @@ export async function requireAdmin({ location }: { location: { href: string } })
   if (!session) {
     // getSession() can briefly return null right after a reload or a token
     // refresh, before Supabase finishes rehydrating the session from
-    // storage. Give it one chance to refresh before bouncing to login —
+    // storage. Give it one chance to refresh before bouncing to login -
     // otherwise a real session can flash a login screen on top of the
     // already-rendered authenticated sidebar.
     const { data } = await supabase.auth.refreshSession()

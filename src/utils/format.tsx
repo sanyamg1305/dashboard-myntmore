@@ -8,7 +8,7 @@ import { calcDelta, calcRateCapped, fmtRate } from './readMetric'
  * - Large numbers: rounded to 1 decimal with K/M suffix
  * - Small numbers: rounded to nearest integer
  * - Zero: show 0
- * - Null/undefined/NaN: show —
+ * - Null/undefined/NaN: show -
  */
 
 export function fmt(
@@ -19,9 +19,9 @@ export function fmt(
     compact?: boolean       // use K/M suffix (default true for numbers >= 1000)
   } = {}
 ): string {
-  if (val === null || val === undefined || val === '') return '—'
+  if (val === null || val === undefined || val === '') return '-'
   const n = Number(val)
-  if (isNaN(n)) return '—'
+  if (isNaN(n)) return '-'
 
   const { unit, decimals, compact = true } = options
 
@@ -59,21 +59,21 @@ export function fmtDelta(
   } = {}
 ): { text: string; color: string; isPositive: boolean | null } {
   if (current === null || current === undefined || previous === null || previous === undefined) {
-    return { text: '—', color: '#999', isPositive: null }
+    return { text: '-', color: '#999', isPositive: null }
   }
 
   const curr = Number(current)
   const prev = Number(previous)
-  if (isNaN(curr) || isNaN(prev)) return { text: '—', color: '#999', isPositive: null }
+  if (isNaN(curr) || isNaN(prev)) return { text: '-', color: '#999', isPositive: null }
 
   const delta = calcDelta(curr, prev)
-  if (delta === null) return { text: '—', color: '#999', isPositive: null }
+  if (delta === null) return { text: '-', color: '#999', isPositive: null }
 
   const isPositive = delta > 0
   const isNeutral = delta === 0
   const color = isNeutral ? '#999' : isPositive ? '#22C55E' : '#EF4444'
 
-  if (isNeutral) return { text: '—', color: '#999', isPositive: null }
+  if (isNeutral) return { text: '-', color: '#999', isPositive: null }
 
   const sign = isPositive ? '+' : ''
 
@@ -99,8 +99,8 @@ export function fmtPct(
   numerator: number | null | undefined,
   denominator: number | null | undefined
 ): string {
-  if (numerator === null || numerator === undefined) return '—'
-  if (denominator === null || denominator === undefined || Number(denominator) === 0) return '—'
+  if (numerator === null || numerator === undefined) return '-'
+  if (denominator === null || denominator === undefined || Number(denominator) === 0) return '-'
   const rate = calcRateCapped(Number(numerator), Number(denominator))
   return fmtRate(rate)
 }
@@ -113,16 +113,16 @@ export function fmtPctDelta(
   currNum: number | null | undefined, currDen: number | null | undefined,
   prevNum: number | null | undefined, prevDen: number | null | undefined
 ): { text: string; color: string } {
-  if (currNum === null || currNum === undefined || currDen === null || currDen === undefined) return { text: '—', color: '#999' }
-  if (prevNum === null || prevNum === undefined || prevDen === null || prevDen === undefined) return { text: '—', color: '#999' }
+  if (currNum === null || currNum === undefined || currDen === null || currDen === undefined) return { text: '-', color: '#999' }
+  if (prevNum === null || prevNum === undefined || prevDen === null || prevDen === undefined) return { text: '-', color: '#999' }
   
   const curr = calcRateCapped(Number(currNum), Number(currDen))
   const prev = calcRateCapped(Number(prevNum), Number(prevDen))
   
   const delta = calcDelta(curr, prev)
-  if (delta === null) return { text: '—', color: '#999' }
+  if (delta === null) return { text: '-', color: '#999' }
   
-  if (Math.abs(delta) < 0.05) return { text: '—', color: '#999' }
+  if (Math.abs(delta) < 0.05) return { text: '-', color: '#999' }
   const sign = delta > 0 ? '+' : ''
   const color = delta > 0 ? '#22C55E' : '#EF4444'
   return { text: `${sign}${delta.toFixed(1)}%`, color }
@@ -134,7 +134,7 @@ export function Delta({ current, previous, unit }: {
   unit?: '%' | '₹' | 'hrs'
 }) {
   const { text, color } = fmtDelta(current, previous, { unit })
-  if (text === '—') return null
+  if (text === '-') return null
   return (
     <span style={{
       fontSize: '11px',
@@ -152,11 +152,11 @@ export function fmtMetricCell(
   metricId: string,
   category: 'content_metrics' | 'leadgen_metrics'
 ): string {
-  if (!row) return '—'
+  if (!row) return '-'
   const field = row?.[category]?.[metricId]
-  if (field === null || field === undefined) return '—'
+  if (field === null || field === undefined) return '-'
   const val = typeof field === 'object' && 'value' in field ? field.value : field
-  if (val === null || val === undefined || val === '') return '—'
+  if (val === null || val === undefined || val === '') return '-'
 
   // Booleans
   const boolMetrics = ['C18', 'C19', 'C20', 'C21', 'C22', 'C23']
@@ -167,13 +167,13 @@ export function fmtMetricCell(
 
   // Text
   if (typeof val === 'string') {
-    if (val.trim() === '' || val === '-') return '—'
+    if (val.trim() === '' || val === '-') return '-'
     return val.length > 35 ? val.slice(0, 35) + '...' : val
   }
 
   // Numbers
   const n = Number(val)
-  if (isNaN(n)) return '—'
+  if (isNaN(n)) return '-'
   if (n === 0) return '0'
   return n.toLocaleString('en-IN')
 }
@@ -210,7 +210,7 @@ export function readNum(
 
 
 export function formatDashboardValue(val: number | null, metricId: string): string {
-  if (val === null || val === undefined) return '—'  // not entered
+  if (val === null || val === undefined) return '-'  // not entered
   if (val === 0) return '0'     // explicitly entered as 0
   
   // Percentage metrics
@@ -220,6 +220,6 @@ export function formatDashboardValue(val: number | null, metricId: string): stri
   }
 
   const n = Number(val)
-  if (isNaN(n)) return '—'
+  if (isNaN(n)) return '-'
   return n.toLocaleString('en-IN')
 }

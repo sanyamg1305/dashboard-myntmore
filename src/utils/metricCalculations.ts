@@ -11,10 +11,10 @@ export function formatMetricDisplay(
   val: number | string | boolean | null,
   metricId: string
 ): string {
-  if (val === null || val === undefined || val === '') return '—'
+  if (val === null || val === undefined || val === '') return '-'
   if (typeof val === 'boolean') return val ? '✅' : '❌'
-  if (typeof val === 'string') return val.length > 0 ? val : '—'
-  if (isNaN(Number(val))) return '—'
+  if (typeof val === 'string') return val.length > 0 ? val : '-'
+  if (isNaN(Number(val))) return '-'
   const n = Number(val)
   if (n === 0) return '0'
   return fmt(n)

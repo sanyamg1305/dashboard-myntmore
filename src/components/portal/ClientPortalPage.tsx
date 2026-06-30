@@ -124,15 +124,15 @@ const TREND_METRICS = [
 ]
 
 function formatVal(val: any): string {
-  if (val === null || val === undefined || val === '') return '—'
+  if (val === null || val === undefined || val === '') return '-'
   const n = Number(val)
-  if (isNaN(n)) return '—'
+  if (isNaN(n)) return '-'
   return n.toLocaleString('en-IN')
 }
 
 function Delta({ curr, prev }: { curr: any; prev: any }) {
   const c = Number(curr), p = Number(prev)
-  if (isNaN(c) || isNaN(p) || !curr || !prev) return <span className="text-muted-foreground">—</span>
+  if (isNaN(c) || isNaN(p) || !curr || !prev) return <span className="text-muted-foreground">-</span>
   const diff = c - p
   if (diff === 0) return <span className="text-muted-foreground flex items-center gap-0.5"><Minus className="w-3 h-3" />0</span>
   const pct = Math.abs(Math.round((diff / p) * 100))
@@ -230,7 +230,7 @@ export function ClientPortalPage() {
     return isNaN(n) ? null : n
   }
 
-  // Redirect non-clients away — but only to a destination they can actually
+  // Redirect non-clients away - but only to a destination they can actually
   // land on. Bouncing every non-client to /dashboard creates an infinite
   // redirect loop for accounts that are neither a client nor an admin
   // (e.g. a team member without a role assigned yet), since /dashboard's
@@ -369,7 +369,7 @@ export function ClientPortalPage() {
   const currentBuilt = buildWeekMetrics(currentData)
   const prevBuilt = buildWeekMetrics(prevData)
 
-  // MTD totals — sum each metric across all weeks in the selected month
+  // MTD totals - sum each metric across all weeks in the selected month
   const mtdTotals: Record<string, number> = {}
   for (const row of mtdData) {
     const built = buildWeekMetrics(row)
@@ -580,7 +580,7 @@ export function ClientPortalPage() {
                 <Card className="bg-white border shadow-sm">
                   <CardHeader className="pb-3">
                     <CardTitle className="text-sm font-black uppercase tracking-wider flex items-center gap-2">
-                      <TrendingUp className="w-4 h-4 text-gold" /> {monthName} — Goal Progress
+                      <TrendingUp className="w-4 h-4 text-gold" /> {monthName} - Goal Progress
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-4">
@@ -612,7 +612,7 @@ export function ClientPortalPage() {
                             <span className="text-sm font-medium text-muted-foreground">{m.label}</span>
                             <div className="flex items-center gap-2 text-xs">
                               <span className={cn('font-black', textColor)}>
-                                {mtd !== null ? mtd.toLocaleString('en-IN') : '—'}
+                                {mtd !== null ? mtd.toLocaleString('en-IN') : '-'}
                               </span>
                               {effectiveMTgt !== null && (
                                 <span className="text-muted-foreground">/ {effectiveMTgt.toLocaleString('en-IN')}</span>
@@ -632,7 +632,7 @@ export function ClientPortalPage() {
                       )
                     })}
                     {GOAL_METRICS.every(m => (monthlyTargets.find(t => t.metric_id === m.id)?.target_value ?? weeklyTargets.find(t => t.metric_id === m.id)?.target_value) === undefined) && (
-                      <p className="text-xs text-muted-foreground text-center py-2">Targets not set yet — ask your account manager.</p>
+                      <p className="text-xs text-muted-foreground text-center py-2">Targets not set yet - ask your account manager.</p>
                     )}
                   </CardContent>
                 </Card>
@@ -789,7 +789,7 @@ export function ClientPortalPage() {
                   {ahaMoments.length === 0 ? (
                     <Card className="bg-white border shadow-sm">
                       <CardContent className="py-10 text-center text-sm text-muted-foreground">
-                        No highlights yet — your account manager will post milestone wins here.
+                        No highlights yet - your account manager will post milestone wins here.
                       </CardContent>
                     </Card>
                   ) : (
@@ -986,18 +986,18 @@ export function ClientPortalPage() {
                                             val !== null ? cn(achTextColor(pct), achBgColor(pct)) : 'text-muted-foreground/40'
                                           )}
                                         >
-                                          {val !== null ? formatDashboardValue(val, m.id) : '—'}
+                                          {val !== null ? formatDashboardValue(val, m.id) : '-'}
                                         </TableCell>
                                       )
                                     })}
                                     <TableCell className="py-1 text-center text-xs font-black bg-amber-50/60 tabular-nums">
-                                      {total !== null ? formatDashboardValue(total, m.id) : '—'}
+                                      {total !== null ? formatDashboardValue(total, m.id) : '-'}
                                     </TableCell>
                                     <TableCell className="py-1 text-center text-xs font-bold bg-amber-50/60 tabular-nums">
-                                      {avg !== null ? formatDashboardValue(Math.round(avg * 10) / 10, m.id) : '—'}
+                                      {avg !== null ? formatDashboardValue(Math.round(avg * 10) / 10, m.id) : '-'}
                                     </TableCell>
                                     <TableCell className="py-1 text-center text-xs text-muted-foreground tabular-nums">
-                                      {tgt !== null ? formatDashboardValue(tgt, m.id) : '—'}
+                                      {tgt !== null ? formatDashboardValue(tgt, m.id) : '-'}
                                     </TableCell>
                                   </TableRow>
                                 )
@@ -1064,7 +1064,7 @@ export function ClientPortalPage() {
                           const avg = total / numVals.length
                           const best = Math.max(...numVals)
                           const bestWeekIdx = values.findIndex(v => v === best)
-                          const bestWeek = bestWeekIdx >= 0 ? fmtWeekShort(reportWeekList[bestWeekIdx]) : '—'
+                          const bestWeek = bestWeekIdx >= 0 ? fmtWeekShort(reportWeekList[bestWeekIdx]) : '-'
                           const tgt = getReportTarget(m.id)
                           const avgAch = tgt ? Math.round((avg / tgt) * 100) : null
                           const badge = achBadge(avgAch)

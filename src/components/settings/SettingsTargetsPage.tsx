@@ -41,7 +41,7 @@ function TargetRow({ metric, currentTarget, previousTarget, mtdActual, onChange,
         <input
           type="number"
           value={currentTarget ?? ''}
-          placeholder="—"
+          placeholder="-"
           onChange={(e) => onChange(metric.id, Number(e.target.value))}
           style={{
             width: '90px',
@@ -59,11 +59,11 @@ function TargetRow({ metric, currentTarget, previousTarget, mtdActual, onChange,
         {metric.unit === '%' && <span style={{ marginLeft: '4px', color: '#999' }}>%</span>}
       </td>
       <td style={{ padding: '10px 8px', color: '#999', fontSize: '14px', textAlign: 'right' }}>
-        {previousTarget !== undefined ? previousTarget : '—'}
+        {previousTarget !== undefined ? previousTarget : '-'}
       </td>
       <td style={{ padding: '10px 8px', textAlign: 'right' }}>
         <span style={{ fontWeight: '600', fontSize: '14px' }}>
-          {mtdActual !== undefined ? mtdActual.toLocaleString() : '—'}
+          {mtdActual !== undefined ? mtdActual.toLocaleString() : '-'}
         </span>
       </td>
       <td style={{ padding: '10px 8px', textAlign: 'right' }}>
@@ -75,7 +75,7 @@ function TargetRow({ metric, currentTarget, previousTarget, mtdActual, onChange,
           }}>
             {achievement}%
           </span>
-        ) : '—'}
+        ) : '-'}
       </td>
     </tr>
   )
@@ -446,15 +446,15 @@ export function SettingsTargetsPage() {
                         <input
                           type="number"
                           value={target ?? ''}
-                          placeholder="—"
+                          placeholder="-"
                           onChange={e => setSalesTargetValues(prev => ({ ...prev, [m.id]: Number(e.target.value) }))}
                           style={{ width: '90px', padding: '6px 10px', border: '1px solid #E5E5E5', borderRadius: '6px', fontSize: '14px', fontWeight: '600', textAlign: 'right', outline: 'none' }}
                           onFocus={e => e.target.style.borderColor = '#FFC947'}
                           onBlur={e => e.target.style.borderColor = '#E5E5E5'}
                         />
                       </td>
-                      <td style={{ padding: '10px 8px', textAlign: 'right', fontWeight: '600', fontSize: '14px' }}>{actual !== undefined ? actual : '—'}</td>
-                      <td style={{ padding: '10px 8px', textAlign: 'right', fontWeight: '700', fontSize: '13px', color: achColor }}>{ach !== null ? `${ach}%` : '—'}</td>
+                      <td style={{ padding: '10px 8px', textAlign: 'right', fontWeight: '600', fontSize: '14px' }}>{actual !== undefined ? actual : '-'}</td>
+                      <td style={{ padding: '10px 8px', textAlign: 'right', fontWeight: '700', fontSize: '13px', color: achColor }}>{ach !== null ? `${ach}%` : '-'}</td>
                     </tr>
                   )
                 })}
@@ -487,7 +487,7 @@ export function SettingsTargetsPage() {
               </SelectTrigger>
               <SelectContent>
                 {clients.map(c => (
-                  <SelectItem key={c.id} value={c.id}>{c.name} — {c.company}</SelectItem>
+                  <SelectItem key={c.id} value={c.id}>{c.name} - {c.company}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
