@@ -38,6 +38,8 @@ export const CONTENT_METRICS: Metric[] = [
   // Engagement Activity
   { id: 'C17', name: 'Engagement on Other Profiles', type: 'number', category: 'content', group: 'Engagement Activity', hasTarget: true, hasNote: false },
   { id: 'C18', name: 'Comment Replies Done', type: 'boolean', category: 'content', group: 'Engagement Activity', hasTarget: false, hasNote: true },
+  { id: 'C29', name: 'Reddit Engagement', type: 'number', category: 'content', group: 'Engagement Activity', hasTarget: true, hasNote: false },
+  { id: 'C30', name: 'Quora Engagement', type: 'number', category: 'content', group: 'Engagement Activity', hasTarget: true, hasNote: false },
   // Delivery & Reporting
   { id: 'C19', name: 'Client Meeting Held', type: 'boolean', category: 'content', group: 'Delivery & Reporting', hasTarget: false, hasNote: false },
   { id: 'C20', name: 'EOM Report Sent', type: 'boolean', category: 'content', group: 'Delivery & Reporting', hasTarget: false, hasNote: false },
