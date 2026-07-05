@@ -538,6 +538,7 @@ export function DataEntryPage() {
                         week_end: weekInfo?.weekEnd ?? '',
                         week_label: weekInfo?.label ?? '',
                         leadgen_metrics: updatedMetrics,
+                        leadgen_submitted_at: new Date().toISOString(),
                     }, { onConflict: 'client_id,week_start' })
 
                 setExistingConnSaveStatus('saved')
@@ -586,6 +587,7 @@ export function DataEntryPage() {
                         week_end: weekInfo?.weekEnd ?? '',
                         week_label: weekInfo?.label ?? '',
                         leadgen_metrics: updatedMetrics,
+                        leadgen_submitted_at: new Date().toISOString(),
                     }, { onConflict: 'client_id,week_start' })
 
                 setInmailSaveStatus('saved')
@@ -1434,6 +1436,36 @@ export function DataEntryPage() {
     )
   }
 
+  const renderContentQualitative = () => (
+    <div className="mt-8 border-t pt-8">
+      <h2 className="text-xl font-black tracking-tight uppercase mb-4">Qualitative</h2>
+      <div className="grid grid-cols-1 gap-4">
+        {CONTENT_METRICS.filter(m => m.group === 'Qualitative').map(m => {
+          const data = formData[m.id] || {}
+          const score = highScores.find(s => s.metric_id === m.id)
+          const prev = (previousWeeklyData?.content_metrics as Record<string, Record<string, unknown>>)?.[m.id]
+          return (
+            <MetricCard
+              key={m.id}
+              metric={m}
+              value={data.value}
+              target={data.target}
+              weeklyTarget={weeklyTargets[m.id]}
+              monthlyTarget={monthlyTargets[m.id]}
+              previousValue={prev?.value as number | string | undefined}
+              lifetimeHigh={score?.lifetime_high ?? undefined}
+              lifetimeHighWeek={formatWeekDate(score?.achieved_week ?? undefined)}
+              onChange={(v) => handleMetricChange(m.id, 'value', v)}
+              onNoteChange={(n) => handleMetricChange(m.id, 'note', n)}
+              note={data.note}
+              allValues={Object.entries(formData).reduce((acc, [k, v]: [string, any]) => ({ ...acc, [k]: v.value }), {})}
+            />
+          )
+        })}
+      </div>
+    </div>
+  )
+
   const renderLeadgenQualitative = () => (
     <div className="mt-8 border-t pt-8">
       <h2 className="text-xl font-black tracking-tight uppercase mb-4">Qualitative</h2>
@@ -1650,7 +1682,8 @@ export function DataEntryPage() {
         ) : (
           <>
             <TabsContent value="content">
-              {renderMetrics(CONTENT_METRICS)}
+              {renderMetrics(CONTENT_METRICS.filter(m => m.group !== 'Qualitative'))}
+              {renderContentQualitative()}
             </TabsContent>
             <TabsContent value="leadgen">
               <LeadGenCampaignEntry />

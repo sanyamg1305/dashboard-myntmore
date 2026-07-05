@@ -46,9 +46,15 @@ export const CONTENT_METRICS: Metric[] = [
   { id: 'C21', name: 'Monthly Podcast Delivered', type: 'boolean', category: 'content', group: 'Delivery & Reporting', hasTarget: false, hasNote: false },
   { id: 'C22', name: 'Quarterly Client Feedback', type: 'boolean', category: 'content', group: 'Delivery & Reporting', hasTarget: false, hasNote: false },
   { id: 'C23', name: 'Aha Moments / Update Shared', type: 'boolean', category: 'content', group: 'Delivery & Reporting', hasTarget: false, hasNote: false },
+  // Newsletter
+  { id: 'C32', name: 'Newsletter Subscribers', type: 'number', category: 'content', group: 'Newsletter', hasTarget: true, hasNote: false },
+  { id: 'C33', name: 'Newsletter Sent', type: 'number', category: 'content', group: 'Newsletter', hasTarget: true, hasNote: false },
+  { id: 'C34', name: 'Newsletter Open Rate', type: 'percentage', category: 'content', group: 'Newsletter', hasTarget: true, hasNote: false, unit: '%' },
+  { id: 'C35', name: 'Newsletter Click Rate', type: 'percentage', category: 'content', group: 'Newsletter', hasTarget: false, hasNote: false, unit: '%' },
   // Qualitative
   { id: 'C24', name: "What's Working (Content)", type: 'textarea', category: 'content', group: 'Qualitative', hasTarget: false, hasNote: false },
   { id: 'C25', name: "What's Not Working (Content)", type: 'textarea', category: 'content', group: 'Qualitative', hasTarget: false, hasNote: false },
+  { id: 'C31', name: 'Happiness Index', type: 'slider', category: 'content', group: 'Qualitative', hasTarget: false, hasNote: false },
 ]
 
 export const LEADGEN_METRICS: Metric[] = [
