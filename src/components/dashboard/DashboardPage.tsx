@@ -1398,7 +1398,7 @@ export function DashboardPage() {
                           metrics={[
                             { id: 'TJI11', name: 'Total Followers' },
                             { id: 'TJI10', name: 'Followers Gained' },
-                            { id: 'TJI05', name: 'Impressions', unit: 'K' },
+                            { id: 'TJI05', name: 'Impressions' },
                             { id: 'TJI04', name: 'Total Posts' },
                             { id: 'TJI01', name: 'Stories' },
                             { id: 'TJI02', name: 'Carousels' },
@@ -1417,9 +1417,9 @@ export function DashboardPage() {
                           metrics={[
                             { id: 'TJY07', name: 'Total Subscribers' },
                             { id: 'TJY06', name: 'New Subscribers' },
-                            { id: 'TJY02', name: 'Views', unit: 'K' },
+                            { id: 'TJY02', name: 'Views' },
                             { id: 'TJY01', name: 'Shorts Uploaded' },
-                            { id: 'TJY03', name: 'Impressions', unit: 'K' },
+                            { id: 'TJY03', name: 'Impressions' },
                             { id: 'TJY04', name: 'Likes' },
                             { id: 'TJY05', name: 'Comments' },
                             { id: 'TJY08', name: 'Watch Time', unit: 'hrs' },
@@ -1591,7 +1591,7 @@ export function DashboardPage() {
                       <>
                         <MMContentRow title="LinkedIn Presence" icon={Linkedin} metrics={[
                             { id: 'MML01', name: 'Posts' },
-                            { id: 'MML02', name: 'Impressions', unit: 'K' },
+                            { id: 'MML02', name: 'Impressions' },
                             { id: 'MML03', name: 'Reactions' },
                             { id: 'MML04', name: 'Comments' },
                             { id: 'MML05', name: 'New Followers' },
@@ -1603,7 +1603,7 @@ export function DashboardPage() {
                             { id: 'MMI01', name: 'Posts' },
                             { id: 'MMI02', name: 'Stories' },
                             { id: 'MMI03', name: 'Reels' },
-                            { id: 'MMI04', name: 'Impressions', unit: 'K' },
+                            { id: 'MMI04', name: 'Impressions' },
                             { id: 'MMI07', name: 'New Followers' },
                             { id: 'MMI08', name: 'Total Followers' },
                             { id: 'MMI09', name: 'ORM Replies' },
@@ -1619,9 +1619,9 @@ export function DashboardPage() {
                         />
                         <MMContentRow title="Other Channels (Quora/Reddit)" icon={MessageSquare} metrics={[
                             { id: 'MMO01', name: 'Quora Ans' },
-                            { id: 'MMO02', name: 'Quora Views', unit: 'K' },
+                            { id: 'MMO02', name: 'Quora Views' },
                             { id: 'MMO05', name: 'Reddit Posts' },
-                            { id: 'MMO08', name: 'Reddit Views', unit: 'K' },
+                            { id: 'MMO08', name: 'Reddit Views' },
                           ]} currentData={mmData.reddit} prevData={prevMmData?.reddit}
                         />
                       </>
