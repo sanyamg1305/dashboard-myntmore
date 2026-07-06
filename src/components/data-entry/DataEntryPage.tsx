@@ -197,10 +197,19 @@ export function DataEntryPage() {
   }
 
   const handleTabChange = (tab: 'content' | 'leadgen') => {
-    saveContentNow({
-      week_end: weekOptions.find(w => w.weekStart === selectedWeek)?.weekEnd,
-      week_label: weekOptions.find(w => w.weekStart === selectedWeek)?.label
-    })
+    if (selectedClientId && selectedWeek) {
+      const weekInfo = weekOptions.find(w => w.weekStart === selectedWeek)
+      const contentMetricsPayload: Record<string, any> = {}
+      CONTENT_METRICS.forEach(m => {
+        if (m.type !== 'auto') contentMetricsPayload[m.id] = formDataRef.current[m.id] || {}
+      })
+      saveContentNow({
+        week_end: weekInfo?.weekEnd || getWeekEnd(selectedWeek),
+        week_label: weekInfo?.label || getWeekLabel(selectedWeek),
+        content_metrics: contentMetricsPayload,
+        content_submitted_at: new Date().toISOString(),
+      })
+    }
     setActiveTab(tab)
   }
 
@@ -257,30 +266,28 @@ export function DataEntryPage() {
   }
 
   const handleMetricChange = (metricId: string, field: 'value' | 'target' | 'note', value: any) => {
-    setFormData(prev => ({
-      ...prev,
+    const updatedFormData = {
+      ...formDataRef.current,
       [metricId]: {
-        ...prev[metricId],
+        ...formDataRef.current[metricId],
         [field]: value
       }
-    }))
+    }
+    setFormData(updatedFormData)
 
-    // Only auto-save if we have all required context
     if (selectedClientId && selectedWeek) {
-      const updatedField = {
-        ...(formDataRef.current[metricId] || {}),
-        [field]: value
-      }
-
-      const category = CONTENT_METRICS.some(m => m.id === metricId) ? 'content_metrics' : 'leadgen_metrics'
-
-      // Fix 6: Use atomic save for metric field concurrency
-      saveFieldAtomic(metricId, updatedField, category)
-      
-      // Fallback/Trigger the generic save for other form data via hook so it updates indicator
+      const weekInfo = weekOptions.find(w => w.weekStart === selectedWeek)
+      // Build the full content_metrics payload so the debounced autosave
+      // actually persists metric values (not just week_end / week_label).
+      const contentMetricsPayload: Record<string, any> = {}
+      CONTENT_METRICS.forEach(m => {
+        if (m.type !== 'auto') contentMetricsPayload[m.id] = updatedFormData[m.id] || {}
+      })
       triggerContentSave({
-        week_end: weekOptions.find(w => w.weekStart === selectedWeek)?.weekEnd || getWeekEnd(selectedWeek),
-        week_label: weekOptions.find(w => w.weekStart === selectedWeek)?.label || getWeekLabel(selectedWeek)
+        week_end: weekInfo?.weekEnd || getWeekEnd(selectedWeek),
+        week_label: weekInfo?.label || getWeekLabel(selectedWeek),
+        content_metrics: contentMetricsPayload,
+        content_submitted_at: new Date().toISOString(),
       })
     }
   }
