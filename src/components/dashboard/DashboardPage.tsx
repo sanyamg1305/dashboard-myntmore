@@ -315,9 +315,10 @@ export function DashboardPage() {
     const currentBuilt = buildWeekMetrics(currentData)
     const prevBuilt = buildWeekMetrics(prevData)
     const [expandedTextareas, setExpandedTextareas] = React.useState<Set<string>>(new Set())
+    const [stickyHeader, setStickyHeader] = React.useState(false)
     return (
-    <div className="overflow-x-auto">
-      <div className="flex items-center gap-3 px-1 py-1.5 text-[10px] font-semibold text-muted-foreground border-b mb-1">
+    <div className={stickyHeader ? "overflow-x-auto overflow-y-auto max-h-[70vh]" : "overflow-x-auto"}>
+      <div className={`flex items-center gap-3 px-1 py-1.5 text-[10px] font-semibold text-muted-foreground border-b mb-1${stickyHeader ? ' sticky top-0 z-20 bg-card' : ''}`}>
         <span className="uppercase tracking-wide">Ach% key:</span>
         <span className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded-sm bg-green-100 border border-green-400"></span><span className="text-green-700">≥100% On target</span></span>
         <span className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded-sm bg-yellow-100 border border-yellow-400"></span><span className="text-yellow-700">75–99% Close</span></span>
@@ -325,9 +326,15 @@ export function DashboardPage() {
         <span className="flex items-center gap-1"><span className="inline-block w-2.5 h-2.5 rounded-sm bg-red-100 border border-red-400"></span><span className="text-red-600">&lt;50% Off track</span></span>
         <span className="flex items-center gap-1 ml-2"><span className="text-yellow-500">★</span><span>New high</span></span>
         <span className="flex items-center gap-1"><span style={{ color: '#B8860B' }} className="font-bold">■</span><span style={{ color: '#B8860B' }}>Best ever</span></span>
+        <button
+          onClick={() => setStickyHeader(h => !h)}
+          className={`ml-auto flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-semibold border transition-colors ${stickyHeader ? 'bg-primary text-primary-foreground border-primary' : 'bg-background text-muted-foreground border-border hover:border-primary hover:text-primary'}`}
+        >
+          {stickyHeader ? '📌 Unfreeze' : '📌 Freeze'}
+        </button>
       </div>
       <Table>
-        <TableHeader className="bg-muted/30 sticky top-0 z-10">
+        <TableHeader className={`bg-muted/30${stickyHeader ? ' sticky top-[33px] z-10' : ' sticky top-0 z-10'}`}>
           <TableRow>
             <TableHead className="text-[10px] font-black uppercase">Metric Name</TableHead>
             <TableHead className="text-[10px] font-black uppercase text-center">Current Week</TableHead>
