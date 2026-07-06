@@ -3,6 +3,7 @@ import { TeamSettingsPage } from './TeamSettingsPage'
 import { ExportPage } from './ExportPage'
 import { SettingsTargetsPage } from './SettingsTargetsPage'
 import { TJChannelAssignmentsTab } from './TJChannelAssignmentsTab'
+import { MetricFieldsTab } from './MetricFieldsTab'
 import { Button } from "@/components/ui/button"
 import { BackButton } from "@/components/ui/BackButton"
 
@@ -59,12 +60,7 @@ export function SettingsPage() {
                     <p className="text-xs text-muted-foreground uppercase tracking-widest font-black">Coming Soon</p>
                   </div>
                 )}
-                {activeTab === 'metrics' && (
-                  <div className="p-12 text-center border rounded-lg bg-muted/20">
-                    <p className="text-muted-foreground font-bold mb-4">Metric Field Configuration</p>
-                    <p className="text-xs text-muted-foreground uppercase tracking-widest font-black">Coming Soon</p>
-                  </div>
-                )}
+                {activeTab === 'metrics' && <MetricFieldsTab />}
               </div>
             </div>
           </main>
