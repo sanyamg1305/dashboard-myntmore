@@ -1087,7 +1087,7 @@ export function DataEntryPage() {
                 
                 {(() => {
                   const activeCampaigns = campaigns.filter(c => c.status === 'active')
-                  const inactiveCampaigns = campaigns.filter(c => c.status === 'inactive')
+                  const inactiveCampaigns = campaigns.filter(c => c.status !== 'active')
 
                   return (
                     <div className="space-y-8">
@@ -1237,7 +1237,7 @@ export function DataEntryPage() {
                         marginTop: '16px'
                       }}
                     >
-                      {showInactive ? '▲ Hide' : '▼ Show'} Inactive Campaigns ({inactiveCampaigns.length})
+                      {showInactive ? '▲ Hide' : '▼ Show'} Completed / Inactive Campaigns ({inactiveCampaigns.length})
                     </button>
 
                     {showInactive && (
@@ -1268,7 +1268,7 @@ export function DataEntryPage() {
                                                       cursor: 'pointer'
                                                     }}
                                                   >
-                                                    {campaign.status === 'active' ? 'Active' : 'Inactive'}
+                                                    {campaign.status === 'active' ? 'Active' : campaign.status === 'completed' ? 'Completed' : 'Inactive'}
                                                   </button>
                                                   <button
                                                     onClick={(e) => { e.stopPropagation(); setEditingCampaign(campaign) }}
