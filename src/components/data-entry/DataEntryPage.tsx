@@ -623,6 +623,71 @@ export function DataEntryPage() {
       else setLeadGenMode('campaigns')
     }, [hasCampaignRows, hasLegacyData, selectedWeek, selectedClientId])
 
+    // Keep a ref to the latest weeklyData leadgen_metrics so the flush-on-unmount
+    // cleanup can merge with existing saved data rather than overwriting it.
+    const weeklyDataLeadgenRef = React.useRef<any>(null)
+    useEffect(() => {
+      weeklyDataLeadgenRef.current = weeklyData?.leadgen_metrics ?? {}
+    }, [weeklyData])
+
+    // Flush all pending debounced saves when the component unmounts (tab switch).
+    // LeadGenCampaignEntry is defined inside DataEntryPage so React treats it as a
+    // new component type on every parent render, causing a remount. Without this
+    // flush, anything typed within the last 2 s is silently discarded.
+    useEffect(() => {
+      return () => {
+        if (!selectedClientId || !selectedWeek) return
+        const weekInfo = weekOptions.find(w => w.weekStart === selectedWeek)
+        const baseMetrics = weeklyDataLeadgenRef.current ?? {}
+
+        if (existingConnTimer.current) {
+          clearTimeout(existingConnTimer.current)
+          const c = existingConnRef.current
+          supabase.from('weekly_data').upsert({
+            client_id: selectedClientId,
+            week_start: selectedWeek,
+            week_end: weekInfo?.weekEnd ?? '',
+            week_label: weekInfo?.label ?? '',
+            leadgen_metrics: {
+              ...baseMetrics,
+              L19: { value: c.sent === '' ? 0 : Number(c.sent) },
+              L20: { value: c.replied === '' ? 0 : Number(c.replied) },
+              L22: { value: c.hotLeads === '' ? 0 : Number(c.hotLeads) },
+              L28: { value: c.notes || '' },
+            },
+            leadgen_submitted_at: new Date().toISOString(),
+          }, { onConflict: 'client_id,week_start' })
+        }
+
+        if (inmailTimer.current) {
+          clearTimeout(inmailTimer.current)
+          const c = inmailRef.current
+          supabase.from('weekly_data').upsert({
+            client_id: selectedClientId,
+            week_start: selectedWeek,
+            week_end: weekInfo?.weekEnd ?? '',
+            week_label: weekInfo?.label ?? '',
+            leadgen_metrics: {
+              ...baseMetrics,
+              L01: { value: c.targeted || '' },
+              L02: { value: c.sent === '' ? 0 : Number(c.sent) },
+              L03: { value: c.accepted === '' ? 0 : Number(c.accepted) },
+              L04: { value: c.declined === '' ? 0 : Number(c.declined) },
+              L06: { value: c.hotLeads === '' ? 0 : Number(c.hotLeads) },
+            },
+            leadgen_submitted_at: new Date().toISOString(),
+          }, { onConflict: 'client_id,week_start' })
+        }
+
+        // Flush any pending campaign saves
+        Object.keys(autosaveTimers.current).forEach(campaignId => {
+          clearTimeout(autosaveTimers.current[campaignId])
+          saveCampaignData(campaignId, true)
+        })
+      }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [])
+
     // When Lead Gen tab is selected and client + week are set:
     useEffect(() => {
       if (activeTab === 'leadgen' && selectedClientId && selectedWeek) {
