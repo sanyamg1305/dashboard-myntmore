@@ -14,7 +14,7 @@ import { calcDelta, calcRateCapped, fmtRate } from './readMetric'
 export function fmt(
   val: number | string | null | undefined,
   options: {
-    unit?: '%' | '₹' | 'hrs' | 'K'
+    unit?: '%' | '₹' | 'hrs' | 'K' | 's' | string
     decimals?: number       // force specific decimal places
     compact?: boolean       // use K/M suffix (default true for numbers >= 1000)
   } = {}
@@ -33,6 +33,11 @@ export function fmt(
   // Hours
   if (unit === 'hrs') {
     return n.toFixed(1) + ' hrs'
+  }
+
+  // Seconds
+  if (unit === 's') {
+    return Math.round(n).toLocaleString('en-IN') + 's'
   }
 
   // Rupees
