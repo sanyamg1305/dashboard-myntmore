@@ -52,7 +52,9 @@ export function MetricFieldsTab() {
     const settings = settingsMap[clientId]
     if (!settings) return
     const field = category === 'content' ? 'active_content_metrics' : 'active_leadgen_metrics'
-    const current = settings[field] || []
+    const allMetricIds = (category === 'content' ? CONTENT_METRICS : LEADGEN_METRICS).map(m => m.id)
+    // null means all active — initialise from full list before mutating
+    const current = settings[field] ?? allMetricIds
     const updated = current.includes(metricId)
       ? current.filter((m: string) => m !== metricId)
       : [...current, metricId]
@@ -86,7 +88,9 @@ export function MetricFieldsTab() {
   const settings = selectedClient ? settingsMap[selectedClient] : null
   const metrics = activeCategory === 'content' ? CONTENT_METRICS : LEADGEN_METRICS
   const activeField = activeCategory === 'content' ? 'active_content_metrics' : 'active_leadgen_metrics'
-  const activeIds: string[] = settings?.[activeField] || []
+  // null means "not yet configured" — treat as all active
+  const allIds = metrics.map(m => m.id)
+  const activeIds: string[] = settings?.[activeField] ?? allIds
 
   // Group metrics by group
   const grouped = metrics.reduce<Record<string, typeof metrics>>((acc, m) => {

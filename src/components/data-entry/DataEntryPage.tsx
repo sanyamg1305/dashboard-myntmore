@@ -396,10 +396,12 @@ export function DataEntryPage() {
 
   const filteredMetrics = (metrics: Metric[]) => {
     if (!clientSettings) return metrics
-    const activeIds = activeTab === 'content' 
-      ? clientSettings.active_content_metrics 
+    const activeIds = activeTab === 'content'
+      ? clientSettings.active_content_metrics
       : clientSettings.active_leadgen_metrics
-    return metrics.filter(m => activeIds?.includes(m.id))
+    // null means not yet configured — show all metrics
+    if (activeIds === null || activeIds === undefined) return metrics
+    return metrics.filter(m => activeIds.includes(m.id))
   }
 
   const groupedMetrics = (metrics: Metric[]) => {
