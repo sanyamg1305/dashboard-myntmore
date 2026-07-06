@@ -1271,6 +1271,16 @@ export function DataEntryPage() {
                                                     {campaign.status === 'active' ? 'Active' : 'Inactive'}
                                                   </button>
                                                   <button
+                                                    onClick={(e) => { e.stopPropagation(); setEditingCampaign(campaign) }}
+                                                    style={{
+                                                      background: 'none', border: '1px solid #E5E5E5',
+                                                      borderRadius: '6px', color: '#555', fontSize: '12px',
+                                                      cursor: 'pointer', padding: '2px 10px'
+                                                    }}
+                                                  >
+                                                    Edit
+                                                  </button>
+                                                  <button
                                                     onClick={(e) => { e.stopPropagation(); deleteCampaign(campaign.id, campaign.name) }}
                                                     style={{
                                                       background: 'none', border: 'none',
