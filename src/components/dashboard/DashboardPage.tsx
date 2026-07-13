@@ -746,7 +746,7 @@ export function DashboardPage() {
                         <p className="text-[10px] font-bold text-muted-foreground uppercase whitespace-nowrap">{m.name}</p>
                         <div className="flex items-baseline gap-2">
                             <p className="text-xl font-black">{gFmt(val, { unit: m.unit })}</p>
-                            <Delta current={val} previous={prev} unit={m.unit} />
+                            <Delta current={val} previous={prev} unit={m.unit} invertColor={m.invertColor} />
                         </div>
                     </div>
                 )
@@ -1676,7 +1676,7 @@ export function DashboardPage() {
                             { id: 'MMW01', name: 'Active Users' },
                             { id: 'MMW02', name: 'New Users' },
                             { id: 'MMW03', name: 'Avg Session', unit: 's' },
-                            { id: 'MMW04', name: 'Bounce Rate', unit: '%' },
+                            { id: 'MMW04', name: 'Bounce Rate', unit: '%', invertColor: true },
                             { id: 'MMW05', name: 'Blogs Published' },
                           ]} currentData={isMonthlyView ? monthMmAgg.website : mmData?.website} prevData={isMonthlyView ? null : prevMmData?.website}
                         />

@@ -133,17 +133,22 @@ export function fmtPctDelta(
   return { text: `${sign}${delta.toFixed(1)}%`, color }
 }
 
-export function Delta({ current, previous, unit }: {
+export function Delta({ current, previous, unit, invertColor }: {
   current: number | null | undefined
   previous: number | null | undefined
   unit?: '%' | '₹' | 'hrs'
+  invertColor?: boolean
 }) {
-  const { text, color } = fmtDelta(current, previous, { unit })
+  const { text, color, isPositive } = fmtDelta(current, previous, { unit })
   if (text === '-') return null
+  let displayColor = color
+  if (invertColor && isPositive !== null) {
+    displayColor = isPositive ? '#EF4444' : '#22C55E'
+  }
   return (
     <span style={{
       fontSize: '11px',
-      color,
+      color: displayColor,
       fontWeight: '600',
       marginLeft: '4px',
     }}>

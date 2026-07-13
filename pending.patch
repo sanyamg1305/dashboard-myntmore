@@ -1,49 +1,66 @@
-From 4b40d1a7a4a747f034054efc3cc3c9f23b111c58 Mon Sep 17 00:00:00 2001
+From 21f4e38a561ef31646cf48e9fb459bd0b0382ab6 Mon Sep 17 00:00:00 2001
 From: Claude <noreply@anthropic.com>
-Date: Mon, 13 Jul 2026 08:13:09 +0000
-Subject: [PATCH] Fix Other Channels: save Quora to quora section, merge
- quora+reddit for dashboard display
+Date: Mon, 13 Jul 2026 08:18:11 +0000
+Subject: [PATCH] Invert delta color for Bounce Rate - higher is bad so show
+ red
 
 ---
- src/components/dashboard/DashboardPage.tsx | 3 ++-
- src/components/mm/MMContentPage.tsx        | 3 ++-
- 2 files changed, 4 insertions(+), 2 deletions(-)
+ src/components/dashboard/DashboardPage.tsx |  4 ++--
+ src/utils/format.tsx                       | 11 ++++++++---
+ 2 files changed, 10 insertions(+), 5 deletions(-)
 
 diff --git a/src/components/dashboard/DashboardPage.tsx b/src/components/dashboard/DashboardPage.tsx
-index a6e2b19..b0c5925 100644
+index b0c5925..7829052 100644
 --- a/src/components/dashboard/DashboardPage.tsx
 +++ b/src/components/dashboard/DashboardPage.tsx
-@@ -688,6 +688,7 @@ export function DashboardPage() {
-     linkedin: aggregateChannelRows(monthMmRows, 'linkedin'),
-     instagram: aggregateChannelRows(monthMmRows, 'instagram'),
-     website: aggregateChannelRows(monthMmRows, 'website'),
-+    quora: aggregateChannelRows(monthMmRows, 'quora'),
-     reddit: aggregateChannelRows(monthMmRows, 'reddit'),
-   }
- 
-@@ -1683,7 +1684,7 @@ export function DashboardPage() {
-                         <MMContentRow title="Other Channels (Quora/Reddit)" icon={MessageSquare} metrics={[
-                             { id: 'MMO01', name: 'Quora Engagement' },
-                             { id: 'MMO05', name: 'Reddit Engagement' },
--                          ]} currentData={isMonthlyView ? monthMmAgg.reddit : mmData?.reddit} prevData={isMonthlyView ? null : prevMmData?.reddit}
-+                          ]} currentData={isMonthlyView ? { ...monthMmAgg.quora, ...monthMmAgg.reddit } : { ...mmData?.quora, ...mmData?.reddit }} prevData={isMonthlyView ? null : { ...prevMmData?.quora, ...prevMmData?.reddit }}
+@@ -747,7 +747,7 @@ export function DashboardPage() {
+                         <p className="text-[10px] font-bold text-muted-foreground uppercase whitespace-nowrap">{m.name}</p>
+                         <div className="flex items-baseline gap-2">
+                             <p className="text-xl font-black">{gFmt(val, { unit: m.unit })}</p>
+-                            <Delta current={val} previous={prev} unit={m.unit} />
++                            <Delta current={val} previous={prev} unit={m.unit} invertColor={m.invertColor} />
+                         </div>
+                     </div>
+                 )
+@@ -1677,7 +1677,7 @@ export function DashboardPage() {
+                             { id: 'MMW01', name: 'Active Users' },
+                             { id: 'MMW02', name: 'New Users' },
+                             { id: 'MMW03', name: 'Avg Session', unit: 's' },
+-                            { id: 'MMW04', name: 'Bounce Rate', unit: '%' },
++                            { id: 'MMW04', name: 'Bounce Rate', unit: '%', invertColor: true },
+                             { id: 'MMW05', name: 'Blogs Published' },
+                           ]} currentData={isMonthlyView ? monthMmAgg.website : mmData?.website} prevData={isMonthlyView ? null : prevMmData?.website}
                          />
-                       </>
-                     ) : (
-diff --git a/src/components/mm/MMContentPage.tsx b/src/components/mm/MMContentPage.tsx
-index 2c2b50d..ca88d6c 100644
---- a/src/components/mm/MMContentPage.tsx
-+++ b/src/components/mm/MMContentPage.tsx
-@@ -221,7 +221,8 @@ export function MMContentPage({ embedded }: { embedded?: boolean } = {}) {
-             </TabsContent>
-             <TabsContent value="other" className="mt-0 space-y-6">
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
--                    {MM_OTHER_METRICS.map(m => renderMetricCard('reddit', m))}
-+                    {renderMetricCard('quora', MM_OTHER_METRICS[0])}
-+                    {renderMetricCard('reddit', MM_OTHER_METRICS[1])}
-                 </div>
-             </TabsContent>
+diff --git a/src/utils/format.tsx b/src/utils/format.tsx
+index bff4f84..cd1aff4 100644
+--- a/src/utils/format.tsx
++++ b/src/utils/format.tsx
+@@ -133,17 +133,22 @@ export function fmtPctDelta(
+   return { text: `${sign}${delta.toFixed(1)}%`, color }
+ }
  
+-export function Delta({ current, previous, unit }: {
++export function Delta({ current, previous, unit, invertColor }: {
+   current: number | null | undefined
+   previous: number | null | undefined
+   unit?: '%' | '₹' | 'hrs'
++  invertColor?: boolean
+ }) {
+-  const { text, color } = fmtDelta(current, previous, { unit })
++  const { text, color, isPositive } = fmtDelta(current, previous, { unit })
+   if (text === '-') return null
++  let displayColor = color
++  if (invertColor && isPositive !== null) {
++    displayColor = isPositive ? '#EF4444' : '#22C55E'
++  }
+   return (
+     <span style={{
+       fontSize: '11px',
+-      color,
++      color: displayColor,
+       fontWeight: '600',
+       marginLeft: '4px',
+     }}>
 -- 
 2.43.0
 
