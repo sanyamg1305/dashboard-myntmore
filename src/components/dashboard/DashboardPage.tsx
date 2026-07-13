@@ -142,6 +142,9 @@ export function DashboardPage() {
   const [collapsedSections, setCollapsedSections] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(true)
   const [isMonthlyView, setIsMonthlyView] = useState(false)
+  const [monthTjRows, setMonthTjRows] = useState<any[]>([])
+  const [monthSalesRows, setMonthSalesRows] = useState<any[]>([])
+  const [monthMmRows, setMonthMmRows] = useState<any[]>([])
   const [weeklyBreakdownClients, setWeeklyBreakdownClients] = useState<Set<string>>(new Set())
   const [notifications, setNotifications] = useState<AppNotification[]>([])
 
@@ -635,6 +638,59 @@ export function DashboardPage() {
     )
   }
 
+  // Aggregate rows for monthly view: sum all numeric metric values across weeks
+  const aggregateChannelRows = (rows: any[], channel: string) => {
+    const out: Record<string, number> = {}
+    for (const row of rows) {
+      const ch = row[channel]
+      if (!ch) continue
+      for (const [k, v] of Object.entries(ch)) {
+        const n = typeof v === 'object' && v !== null && 'value' in (v as any)
+          ? Number((v as any).value)
+          : Number(v)
+        if (!isNaN(n)) out[k] = (out[k] ?? 0) + n
+      }
+    }
+    return out
+  }
+
+  const aggregateSalesSection = (rows: any[], section: string) => {
+    const out: Record<string, number> = {}
+    for (const row of rows) {
+      const sec = row[section]
+      if (!sec) continue
+      for (const [k, v] of Object.entries(sec)) {
+        const n = typeof v === 'object' && v !== null && 'value' in (v as any)
+          ? Number((v as any).value)
+          : Number(v)
+        if (!isNaN(n)) out[k] = (out[k] ?? 0) + n
+      }
+    }
+    return out
+  }
+
+  const monthTjAgg = {
+    instagram: aggregateChannelRows(monthTjRows, 'instagram'),
+    youtube: aggregateChannelRows(monthTjRows, 'youtube'),
+    podcast: aggregateChannelRows(monthTjRows, 'podcast'),
+    video_pipeline: aggregateChannelRows(monthTjRows, 'video_pipeline'),
+  }
+
+  const monthSalesAgg = {
+    tj_outreach: aggregateSalesSection(monthSalesRows, 'tj_outreach'),
+    jahnvi_outreach: aggregateSalesSection(monthSalesRows, 'jahnvi_outreach'),
+    shirin_outreach: aggregateSalesSection(monthSalesRows, 'shirin_outreach'),
+    cold_email: aggregateSalesSection(monthSalesRows, 'cold_email'),
+    meeting_tracker: aggregateSalesSection(monthSalesRows, 'meeting_tracker'),
+  }
+
+  const monthMmAgg = {
+    linkedin: aggregateChannelRows(monthMmRows, 'linkedin'),
+    instagram: aggregateChannelRows(monthMmRows, 'instagram'),
+    website: aggregateChannelRows(monthMmRows, 'website'),
+    reddit: aggregateChannelRows(monthMmRows, 'reddit'),
+  }
+
   const TJChannelCard = ({ title, icon: Icon, metrics, currentData, prevData }: { title: string, icon: any, metrics: any[], currentData: any, prevData: any }) => (
     <Card className="border shadow-sm bg-card h-full">
       <CardHeader className="py-3 border-b bg-muted/20">
@@ -727,7 +783,10 @@ export function DashboardPage() {
         { data: highScoresData },
         { data: monthWeeksRes },
         { data: pData },
-        { data: pUpdates }
+        { data: pUpdates },
+        { data: monthTjRes },
+        { data: monthSalesRes },
+        { data: monthMmRes },
       ] = await Promise.all([
         supabase.from('clients').select('*, content_manager:profiles!content_manager_id(full_name), leadgen_manager:profiles!leadgen_manager_id(full_name)').eq('status', 'active').order('name'),
         supabase.from('client_health_scores').select('*').order('week_start', { ascending: false }),
@@ -750,7 +809,10 @@ export function DashboardPage() {
           .lte('week_start', (() => { const [y, m] = weekStart.slice(0, 7).split('-').map(Number); return new Date(y, m, 0).toISOString().split('T')[0] })())
           .order('week_start', { ascending: true }),
         supabase.from('myntmore_processes').select('*').eq('status', 'active').order('priority', { ascending: true }).order('created_at', { ascending: true }),
-        supabase.from('process_weekly_updates').select('*, profiles(full_name)').eq('week_start', weekStart)
+        supabase.from('process_weekly_updates').select('*, profiles(full_name)').eq('week_start', weekStart),
+        supabase.from('tj_weekly_data').select('*').gte('week_start', weekStart.slice(0, 7) + '-01').lte('week_start', weekStart.slice(0, 7) + '-31'),
+        supabase.from('sales_weekly_data').select('*').gte('week_start', weekStart.slice(0, 7) + '-01').lte('week_start', weekStart.slice(0, 7) + '-31'),
+        supabase.from('mm_weekly_data').select('*').gte('week_start', weekStart.slice(0, 7) + '-01').lte('week_start', weekStart.slice(0, 7) + '-31'),
       ])
 
       setClients(clientsData || [])
@@ -772,6 +834,9 @@ export function DashboardPage() {
       setHighScores(highScoresData || [])
       setProcessesData(pData || [])
       setProcessesUpdates(pUpdates || [])
+      setMonthTjRows(monthTjRes || [])
+      setMonthSalesRows(monthSalesRes || [])
+      setMonthMmRows(monthMmRes || [])
 
       // Backfill high scores for all clients - scans full history and self-heals stale/missing records
       Promise.all(
@@ -1383,18 +1448,16 @@ export function DashboardPage() {
                 )}
               </div>
 
-              {!isMonthlyView && (
-                <>
               {/* SECTION: TJ PERSONAL BRAND */}
               <div className="space-y-4">
-                <SectionHeader title="TJ Personal Brand" id="tj" icon={Star} />
+                <SectionHeader title={`TJ Personal Brand${isMonthlyView ? ' (Month to Date)' : ''}`} id="tj" icon={Star} />
                 {!collapsedSections.has('tj') && (
                   <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-                    {tjData ? (
+                    {(isMonthlyView ? monthTjRows.length > 0 : !!tjData) ? (
                       <>
-                        <TJChannelCard 
-                          title="Instagram" 
-                          icon={Instagram} 
+                        <TJChannelCard
+                          title="Instagram"
+                          icon={Instagram}
                           metrics={[
                             { id: 'TJI11', name: 'Total Followers' },
                             { id: 'TJI10', name: 'Followers Gained' },
@@ -1407,13 +1470,13 @@ export function DashboardPage() {
                             { id: 'TJI07', name: 'Comments' },
                             { id: 'TJI08', name: 'Shares' },
                             { id: 'TJI09', name: 'Saves' },
-                          ]} 
-                          currentData={tjData.instagram} 
-                          prevData={tjPrev?.instagram}
+                          ]}
+                          currentData={isMonthlyView ? monthTjAgg.instagram : tjData?.instagram}
+                          prevData={isMonthlyView ? null : tjPrev?.instagram}
                         />
-                        <TJChannelCard 
-                          title="YouTube" 
-                          icon={Youtube} 
+                        <TJChannelCard
+                          title="YouTube"
+                          icon={Youtube}
                           metrics={[
                             { id: 'TJY07', name: 'Total Subscribers' },
                             { id: 'TJY06', name: 'New Subscribers' },
@@ -1423,32 +1486,32 @@ export function DashboardPage() {
                             { id: 'TJY04', name: 'Likes' },
                             { id: 'TJY05', name: 'Comments' },
                             { id: 'TJY08', name: 'Watch Time', unit: 'hrs' },
-                          ]} 
-                          currentData={tjData.youtube} 
-                          prevData={tjPrev?.youtube}
+                          ]}
+                          currentData={isMonthlyView ? monthTjAgg.youtube : tjData?.youtube}
+                          prevData={isMonthlyView ? null : tjPrev?.youtube}
                         />
-                        <TJChannelCard 
-                          title="Newsletter & Podcast" 
-                          icon={Mail} 
+                        <TJChannelCard
+                          title="Newsletter & Podcast"
+                          icon={Mail}
                           metrics={[
                             { id: 'TJP01', name: 'LinkedIn Subs' },
                             { id: 'TJP02', name: 'Email Subs' },
                             { id: 'TJP03', name: 'Podcast Listens' },
                             { id: 'TJP04', name: 'Downloads' },
-                          ]} 
-                          currentData={tjData.podcast} 
-                          prevData={tjPrev?.podcast}
+                          ]}
+                          currentData={isMonthlyView ? monthTjAgg.podcast : tjData?.podcast}
+                          prevData={isMonthlyView ? null : tjPrev?.podcast}
                         />
-                        <TJChannelCard 
-                          title="Video Pipeline" 
-                          icon={Mic} 
+                        <TJChannelCard
+                          title="Video Pipeline"
+                          icon={Mic}
                           metrics={[
                             { id: 'TJV01', name: 'Videos Shot' },
                             { id: 'TJV02', name: 'Videos Edited' },
                             { id: 'TJV03', name: 'Videos Scheduled' },
-                          ]} 
-                          currentData={tjData.video_pipeline} 
-                          prevData={tjPrev?.video_pipeline}
+                          ]}
+                          currentData={isMonthlyView ? monthTjAgg.video_pipeline : tjData?.video_pipeline}
+                          prevData={isMonthlyView ? null : tjPrev?.video_pipeline}
                         />
                       </>
                     ) : (
@@ -1465,48 +1528,48 @@ export function DashboardPage() {
 
               {/* SECTION: SALES & OUTREACH */}
               <div className="space-y-4">
-                <SectionHeader title="Sales & Outreach" id="sales" icon={TrendingUp} />
+                <SectionHeader title={`Sales & Outreach${isMonthlyView ? ' (Month to Date)' : ''}`} id="sales" icon={TrendingUp} />
                 {!collapsedSections.has('sales') && (
                   <div className="space-y-4">
-                    {salesData ? (
+                    {(isMonthlyView ? monthSalesRows.length > 0 : !!salesData) ? (
                       <>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <SalesOutreachCard 
-                            title="TJ Outreach" 
+                          <SalesOutreachCard
+                            title="TJ Outreach"
                             metrics={[
                               { id: 'SO02', name: 'Sent' },
                               { id: 'SO03', name: 'Accepted' },
                               { id: 'SO05', name: 'Answered' },
                               { id: 'SO07', name: 'Hot Leads' },
                               { id: 'SO08', name: 'Meetings' },
-                            ]} 
-                            currentData={salesData.tj_outreach} 
+                            ]}
+                            currentData={isMonthlyView ? monthSalesAgg.tj_outreach : salesData?.tj_outreach}
                           />
-                          <SalesOutreachCard 
-                            title="Jahnvi Outreach" 
+                          <SalesOutreachCard
+                            title="Jahnvi Outreach"
                             metrics={[
                               { id: 'SO11', name: 'Sent' },
                               { id: 'SO12', name: 'Accepted' },
                               { id: 'SO14', name: 'Answered' },
                               { id: 'SO16', name: 'Hot Leads' },
                               { id: 'SO17', name: 'Meetings' },
-                            ]} 
-                            currentData={salesData.jahnvi_outreach} 
+                            ]}
+                            currentData={isMonthlyView ? monthSalesAgg.jahnvi_outreach : salesData?.jahnvi_outreach}
                           />
-                          <SalesOutreachCard 
-                            title="Shirin Outreach" 
+                          <SalesOutreachCard
+                            title="Shirin Outreach"
                             metrics={[
                               { id: 'SO20', name: 'Sent' },
                               { id: 'SO21', name: 'Accepted' },
                               { id: 'SO23', name: 'Answered' },
                               { id: 'SO25', name: 'Hot Leads' },
                               { id: 'SO26', name: 'Meetings' },
-                            ]} 
-                            currentData={salesData.shirin_outreach} 
+                            ]}
+                            currentData={isMonthlyView ? monthSalesAgg.shirin_outreach : salesData?.shirin_outreach}
                           />
                         </div>
                         {(() => {
-                          const ceS = salesData
+                          const ceS = isMonthlyView ? { cold_email: monthSalesAgg.cold_email } : salesData
                           const so50 = salesVal(ceS, 'cold_email', 'SO50')
                           const so51 = salesVal(ceS, 'cold_email', 'SO51')
                           const so53 = salesVal(ceS, 'cold_email', 'SO53')
@@ -1535,7 +1598,7 @@ export function DashboardPage() {
                           )
                         })()}
                         {(() => {
-                          const mtS = salesData
+                          const mtS = isMonthlyView ? { meeting_tracker: monthSalesAgg.meeting_tracker } : salesData
                           const so43 = salesVal(mtS, 'meeting_tracker', 'SO43')
                           const so47 = salesVal(mtS, 'meeting_tracker', 'SO47')
                           return (
@@ -1584,10 +1647,10 @@ export function DashboardPage() {
 
               {/* SECTION: MM COMPANY CONTENT */}
               <div className="space-y-4">
-                <SectionHeader title="MM Company Content" id="mm" icon={Globe} />
+                <SectionHeader title={`MM Company Content${isMonthlyView ? ' (Month to Date)' : ''}`} id="mm" icon={Globe} />
                 {!collapsedSections.has('mm') && (
                   <Card className="border shadow-sm divide-y">
-                    {mmData ? (
+                    {(isMonthlyView ? monthMmRows.length > 0 : !!mmData) ? (
                       <>
                         <MMContentRow title="LinkedIn Presence" icon={Linkedin} metrics={[
                             { id: 'MML01', name: 'Posts' },
@@ -1597,7 +1660,7 @@ export function DashboardPage() {
                             { id: 'MML05', name: 'New Followers' },
                             { id: 'MML06', name: 'Total Followers' },
                             { id: 'MML07', name: 'Page Views' },
-                          ]} currentData={mmData.linkedin} prevData={prevMmData?.linkedin} 
+                          ]} currentData={isMonthlyView ? monthMmAgg.linkedin : mmData?.linkedin} prevData={isMonthlyView ? null : prevMmData?.linkedin}
                         />
                         <MMContentRow title="Instagram Presence" icon={Instagram} metrics={[
                             { id: 'MMI01', name: 'Posts' },
@@ -1607,7 +1670,7 @@ export function DashboardPage() {
                             { id: 'MMI07', name: 'New Followers' },
                             { id: 'MMI08', name: 'Total Followers' },
                             { id: 'MMI09', name: 'ORM Replies' },
-                          ]} currentData={mmData.instagram} prevData={prevMmData?.instagram}
+                          ]} currentData={isMonthlyView ? monthMmAgg.instagram : mmData?.instagram} prevData={isMonthlyView ? null : prevMmData?.instagram}
                         />
                         <MMContentRow title="Website Analytics" icon={Globe} metrics={[
                             { id: 'MMW01', name: 'Active Users' },
@@ -1615,14 +1678,14 @@ export function DashboardPage() {
                             { id: 'MMW03', name: 'Avg Session', unit: 's' },
                             { id: 'MMW04', name: 'Bounce Rate', unit: '%' },
                             { id: 'MMW05', name: 'Blogs Published' },
-                          ]} currentData={mmData.website} prevData={prevMmData?.website}
+                          ]} currentData={isMonthlyView ? monthMmAgg.website : mmData?.website} prevData={isMonthlyView ? null : prevMmData?.website}
                         />
                         <MMContentRow title="Other Channels (Quora/Reddit)" icon={MessageSquare} metrics={[
                             { id: 'MMO01', name: 'Quora Ans' },
                             { id: 'MMO02', name: 'Quora Views' },
                             { id: 'MMO05', name: 'Reddit Posts' },
                             { id: 'MMO08', name: 'Reddit Views' },
-                          ]} currentData={mmData.reddit} prevData={prevMmData?.reddit}
+                          ]} currentData={isMonthlyView ? monthMmAgg.reddit : mmData?.reddit} prevData={isMonthlyView ? null : prevMmData?.reddit}
                         />
                       </>
                     ) : (
@@ -1726,8 +1789,6 @@ export function DashboardPage() {
                   </Card>
                 )}
               </div>
-                </>
-              )}
             </div>
           </main>
           {editingCampaign && (
