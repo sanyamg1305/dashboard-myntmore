@@ -1,34 +1,46 @@
-From 391dca26d621e3ef7e84826e27a8e2437dbcf0b1 Mon Sep 17 00:00:00 2001
+From 4b40d1a7a4a747f034054efc3cc3c9f23b111c58 Mon Sep 17 00:00:00 2001
 From: Claude <noreply@anthropic.com>
-Date: Mon, 13 Jul 2026 07:14:24 +0000
-Subject: [PATCH] Fix MM Other Channels UI to show only Quora/Reddit Engagement
- fields
+Date: Mon, 13 Jul 2026 08:13:09 +0000
+Subject: [PATCH] Fix Other Channels: save Quora to quora section, merge
+ quora+reddit for dashboard display
 
 ---
- src/components/mm/MMContentPage.tsx | 13 ++-----------
- 1 file changed, 2 insertions(+), 11 deletions(-)
+ src/components/dashboard/DashboardPage.tsx | 3 ++-
+ src/components/mm/MMContentPage.tsx        | 3 ++-
+ 2 files changed, 4 insertions(+), 2 deletions(-)
 
+diff --git a/src/components/dashboard/DashboardPage.tsx b/src/components/dashboard/DashboardPage.tsx
+index a6e2b19..b0c5925 100644
+--- a/src/components/dashboard/DashboardPage.tsx
++++ b/src/components/dashboard/DashboardPage.tsx
+@@ -688,6 +688,7 @@ export function DashboardPage() {
+     linkedin: aggregateChannelRows(monthMmRows, 'linkedin'),
+     instagram: aggregateChannelRows(monthMmRows, 'instagram'),
+     website: aggregateChannelRows(monthMmRows, 'website'),
++    quora: aggregateChannelRows(monthMmRows, 'quora'),
+     reddit: aggregateChannelRows(monthMmRows, 'reddit'),
+   }
+ 
+@@ -1683,7 +1684,7 @@ export function DashboardPage() {
+                         <MMContentRow title="Other Channels (Quora/Reddit)" icon={MessageSquare} metrics={[
+                             { id: 'MMO01', name: 'Quora Engagement' },
+                             { id: 'MMO05', name: 'Reddit Engagement' },
+-                          ]} currentData={isMonthlyView ? monthMmAgg.reddit : mmData?.reddit} prevData={isMonthlyView ? null : prevMmData?.reddit}
++                          ]} currentData={isMonthlyView ? { ...monthMmAgg.quora, ...monthMmAgg.reddit } : { ...mmData?.quora, ...mmData?.reddit }} prevData={isMonthlyView ? null : { ...prevMmData?.quora, ...prevMmData?.reddit }}
+                         />
+                       </>
+                     ) : (
 diff --git a/src/components/mm/MMContentPage.tsx b/src/components/mm/MMContentPage.tsx
-index 4b81da0..2c2b50d 100644
+index 2c2b50d..ca88d6c 100644
 --- a/src/components/mm/MMContentPage.tsx
 +++ b/src/components/mm/MMContentPage.tsx
-@@ -220,17 +220,8 @@ export function MMContentPage({ embedded }: { embedded?: boolean } = {}) {
-                 </div>
+@@ -221,7 +221,8 @@ export function MMContentPage({ embedded }: { embedded?: boolean } = {}) {
              </TabsContent>
              <TabsContent value="other" className="mt-0 space-y-6">
--                <div>
--                    <h3 className="text-sm font-black uppercase text-muted-foreground mb-4">Quora</h3>
--                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
--                        {MM_OTHER_METRICS.slice(0, 4).map(m => renderMetricCard('quora', m))}
--                    </div>
--                </div>
--                <div className="pt-4">
--                    <h3 className="text-sm font-black uppercase text-muted-foreground mb-4">Reddit</h3>
--                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
--                        {MM_OTHER_METRICS.slice(4).map(m => renderMetricCard('reddit', m))}
--                    </div>
-+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-+                    {MM_OTHER_METRICS.map(m => renderMetricCard('reddit', m))}
+                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+-                    {MM_OTHER_METRICS.map(m => renderMetricCard('reddit', m))}
++                    {renderMetricCard('quora', MM_OTHER_METRICS[0])}
++                    {renderMetricCard('reddit', MM_OTHER_METRICS[1])}
                  </div>
              </TabsContent>
  
