@@ -220,17 +220,8 @@ export function MMContentPage({ embedded }: { embedded?: boolean } = {}) {
                 </div>
             </TabsContent>
             <TabsContent value="other" className="mt-0 space-y-6">
-                <div>
-                    <h3 className="text-sm font-black uppercase text-muted-foreground mb-4">Quora</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        {MM_OTHER_METRICS.slice(0, 4).map(m => renderMetricCard('quora', m))}
-                    </div>
-                </div>
-                <div className="pt-4">
-                    <h3 className="text-sm font-black uppercase text-muted-foreground mb-4">Reddit</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                        {MM_OTHER_METRICS.slice(4).map(m => renderMetricCard('reddit', m))}
-                    </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {MM_OTHER_METRICS.map(m => renderMetricCard('reddit', m))}
                 </div>
             </TabsContent>
 
