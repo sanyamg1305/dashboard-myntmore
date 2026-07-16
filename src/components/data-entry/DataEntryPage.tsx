@@ -1377,41 +1377,46 @@ export function DataEntryPage() {
                                         </div>
                                     </AccordionTrigger>
                                     <AccordionContent className="p-4 pt-0 border-t bg-muted/5">
-                                        <div className="space-y-6 mt-4 pointer-events-none opacity-80">
-                                            {/* Read-only view of inactive campaigns */}
+                                        <div className="space-y-6 mt-4">
                                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                                 <div className="space-y-2">
                                                     <Label className="text-[10px] font-bold uppercase text-muted-foreground">Outreach</Label>
                                                     <div className="grid grid-cols-2 gap-2">
                                                         <div className="space-y-1">
                                                             <Label className="text-[9px] uppercase">Conn Sent</Label>
-                                                            <Input type="number" value={data.conn_requests_sent ?? ''} readOnly />
+                                                            <Input type="number" placeholder="-" value={data.conn_requests_sent ?? ''} onChange={(e) => handleCampaignChange(campaign.id, 'conn_requests_sent', e.target.value)} />
                                                         </div>
                                                         <div className="space-y-1">
                                                             <Label className="text-[9px] uppercase">Accepted</Label>
-                                                            <Input type="number" value={data.accepted ?? ''} readOnly />
+                                                            <Input type="number" placeholder="-" value={data.accepted ?? ''} onChange={(e) => handleCampaignChange(campaign.id, 'accepted', e.target.value)} />
                                                         </div>
                                                     </div>
+                                                    <p className="text-[10px] font-bold text-gold">Acceptance Rate: {fmtRate(accRate)}</p>
                                                 </div>
                                                 <div className="space-y-2">
                                                     <Label className="text-[10px] font-bold uppercase text-muted-foreground">Engagement</Label>
                                                     <div className="grid grid-cols-3 gap-2">
                                                         <div className="space-y-1">
                                                             <Label className="text-[9px] uppercase">Answered</Label>
-                                                            <Input type="number" value={data.answered ?? ''} readOnly />
+                                                            <Input type="number" placeholder="-" value={data.answered ?? ''} onChange={(e) => handleCampaignChange(campaign.id, 'answered', e.target.value)} />
                                                         </div>
                                                         <div className="space-y-1">
                                                             <Label className="text-[9px] uppercase">Positive</Label>
-                                                            <Input type="number" value={data.positive_replies ?? ''} readOnly />
+                                                            <Input type="number" placeholder="-" value={data.positive_replies ?? ''} onChange={(e) => handleCampaignChange(campaign.id, 'positive_replies', e.target.value)} />
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <Label className="text-[9px] uppercase">Negative</Label>
+                                                            <Input type="number" placeholder="-" value={data.negative_replies ?? ''} onChange={(e) => handleCampaignChange(campaign.id, 'negative_replies', e.target.value)} />
                                                         </div>
                                                     </div>
+                                                    <p className="text-[10px] font-bold text-gold">Response Rate: {fmtRate(respRate)}</p>
                                                 </div>
                                                 <div className="space-y-2">
                                                     <Label className="text-[10px] font-bold uppercase text-muted-foreground">Results</Label>
                                                     <div className="grid grid-cols-1 gap-2">
                                                         <div className="space-y-1">
                                                             <Label className="text-[9px] uppercase">Meetings</Label>
-                                                            <Input type="number" value={data.meetings_booked ?? ''} readOnly />
+                                                            <Input type="number" placeholder="-" value={data.meetings_booked ?? ''} onChange={(e) => handleCampaignChange(campaign.id, 'meetings_booked', e.target.value)} />
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1419,8 +1424,14 @@ export function DataEntryPage() {
                                             <div className="pt-2">
                                                 <div className="space-y-2">
                                                     <Label className="text-[10px] font-bold uppercase text-muted-foreground">Notes</Label>
-                                                    <Input value={data.notes ?? ''} readOnly />
+                                                    <Input value={data.notes ?? ''} onChange={(e) => handleCampaignChange(campaign.id, 'notes', e.target.value)} placeholder="Campaign specific notes..." />
                                                 </div>
+                                            </div>
+                                            <div className="pt-4 border-t flex justify-between items-center">
+                                                <p className="text-[10px] italic text-muted-foreground">Message Narrative: {campaign.message_narrative || 'None'}</p>
+                                                <Button onClick={() => saveCampaignData(campaign.id)} size="sm" className="bg-gold/10 text-gold hover:bg-gold/20 font-bold h-8">
+                                                    Save Campaign Data
+                                                </Button>
                                             </div>
                                         </div>
                                     </AccordionContent>
