@@ -8,21 +8,23 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
-import { 
-  History, 
-  Check, 
-  Save, 
+import {
+  History,
+  Check,
+  Save,
   Loader2,
   Instagram,
   Youtube,
   Mic,
-  Video
+  Video,
+  TrendingUp
 } from "lucide-react"
-import { 
-  TJ_INSTAGRAM_METRICS, 
-  TJ_YOUTUBE_METRICS, 
-  TJ_PODCAST_METRICS, 
+import {
+  TJ_INSTAGRAM_METRICS,
+  TJ_YOUTUBE_METRICS,
+  TJ_PODCAST_METRICS,
   TJ_VIDEO_METRICS,
+  TJ_ADS_METRICS,
   CompanyMetric
 } from "@/data/company_metrics"
 import { BackButton } from "@/components/ui/BackButton"
@@ -48,7 +50,8 @@ export function TJPersonalBrandPage({ embedded }: { embedded?: boolean } = {}) {
     instagram: {},
     youtube: {},
     newsletter_podcast: {},
-    video_pipeline: {}
+    video_pipeline: {},
+    ads: {}
   })
   
   const [channelOwners, setChannelOwners] = useState<Record<string, string>>({})
@@ -97,14 +100,16 @@ export function TJPersonalBrandPage({ embedded }: { embedded?: boolean } = {}) {
           instagram: row.instagram || {},
           youtube: row.youtube || {},
           newsletter_podcast: { ...(row.linkedin_newsletter || {}), ...(row.email_newsletter || {}), ...(row.podcast || {}) },
-          video_pipeline: row.video_pipeline || {}
+          video_pipeline: row.video_pipeline || {},
+          ads: row.ads || {}
         })
       } else {
         setFormData({
           instagram: {},
           youtube: {},
           newsletter_podcast: {},
-          video_pipeline: {}
+          video_pipeline: {},
+          ads: {}
         })
       }
     } catch (error: any) {
@@ -133,10 +138,11 @@ export function TJPersonalBrandPage({ embedded }: { embedded?: boolean } = {}) {
         week_label: weekInfo?.label || '',
         instagram: updated.instagram,
         youtube: updated.youtube,
-        linkedin_newsletter: { TJP01: updated.newsletter_podcast?.TJP01 },
+        linkedin_newsletter: { TJP01: updated.newsletter_podcast?.TJP01, TJP05: updated.newsletter_podcast?.TJP05, TJP06: updated.newsletter_podcast?.TJP06, TJP07: updated.newsletter_podcast?.TJP07 },
         email_newsletter: { TJP02: updated.newsletter_podcast?.TJP02 },
         podcast: { TJP03: updated.newsletter_podcast?.TJP03, TJP04: updated.newsletter_podcast?.TJP04 },
         video_pipeline: updated.video_pipeline,
+        ads: updated.ads,
         submitted_by: user?.id
       })
 
@@ -184,7 +190,7 @@ export function TJPersonalBrandPage({ embedded }: { embedded?: boolean } = {}) {
               onChange={e => updateMetric(section, metric.id, 'value', e.target.value)}
               className="h-12 text-2xl font-black pr-8"
             />
-            {metric.unit && <span className="absolute right-3 top-1/2 -translate-y-1/2 font-bold text-muted-foreground">{metric.unit}</span>}
+            {(metric.unit || metric.type === 'percentage') && <span className="absolute right-3 top-1/2 -translate-y-1/2 font-bold text-muted-foreground">{metric.unit || '%'}</span>}
           </div>
           {metric.hasTarget && (
             <div className="flex gap-2 pt-2 border-t border-border/30">
@@ -234,7 +240,7 @@ export function TJPersonalBrandPage({ embedded }: { embedded?: boolean } = {}) {
       </header>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="bg-muted/50 p-1 h-auto grid grid-cols-4 max-w-2xl">
+        <TabsList className="bg-muted/50 p-1 h-auto grid grid-cols-5 max-w-3xl">
           <TabsTrigger value="instagram" className="py-2.5 font-bold data-[state=active]:bg-gold data-[state=active]:text-black gap-2">
             <Instagram className="w-4 h-4" /> Instagram
           </TabsTrigger>
@@ -246,6 +252,9 @@ export function TJPersonalBrandPage({ embedded }: { embedded?: boolean } = {}) {
           </TabsTrigger>
           <TabsTrigger value="pipeline" className="py-2.5 font-bold data-[state=active]:bg-gold data-[state=active]:text-black gap-2">
             <Video className="w-4 h-4" /> Video Pipeline
+          </TabsTrigger>
+          <TabsTrigger value="ads" className="py-2.5 font-bold data-[state=active]:bg-gold data-[state=active]:text-black gap-2">
+            <TrendingUp className="w-4 h-4" /> Ads
           </TabsTrigger>
         </TabsList>
         
@@ -297,14 +306,37 @@ export function TJPersonalBrandPage({ embedded }: { embedded?: boolean } = {}) {
                     {TJ_YOUTUBE_METRICS.map(m => renderMetricCard('youtube', m))}
                 </div>
             </TabsContent>
-            <TabsContent value="podcast" className="mt-0">
-                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {TJ_PODCAST_METRICS.map(m => renderMetricCard('newsletter_podcast', m))}
+            <TabsContent value="podcast" className="mt-0 space-y-6">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-3 border-b pb-1">LinkedIn Newsletter</p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {TJ_PODCAST_METRICS.filter(m => ['TJP01','TJP05','TJP06','TJP07'].includes(m.id)).map(m => renderMetricCard('newsletter_podcast', m))}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-3 border-b pb-1">Email Newsletter & Podcast</p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {TJ_PODCAST_METRICS.filter(m => ['TJP02','TJP03','TJP04'].includes(m.id)).map(m => renderMetricCard('newsletter_podcast', m))}
+                  </div>
                 </div>
             </TabsContent>
             <TabsContent value="pipeline" className="mt-0">
                 <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
                     {TJ_VIDEO_METRICS.map(m => renderMetricCard('video_pipeline', m))}
+                </div>
+            </TabsContent>
+            <TabsContent value="ads" className="mt-0 space-y-6">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-3 border-b pb-1">Google Ads</p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {TJ_ADS_METRICS.filter(m => m.id.startsWith('TJA0') && ['TJA01','TJA02','TJA03','TJA04'].includes(m.id)).map(m => renderMetricCard('ads', m))}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-3 border-b pb-1">Meta Ads</p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {TJ_ADS_METRICS.filter(m => ['TJA05','TJA06','TJA07','TJA08'].includes(m.id)).map(m => renderMetricCard('ads', m))}
+                  </div>
                 </div>
             </TabsContent>
 

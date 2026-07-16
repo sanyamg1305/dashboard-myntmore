@@ -37,9 +37,23 @@ export const TJ_YOUTUBE_METRICS: CompanyMetric[] = [
 
 export const TJ_PODCAST_METRICS: CompanyMetric[] = [
   { id: 'TJP01', name: 'LinkedIn Newsletter Subs', type: 'number', hasTarget: true },
+  { id: 'TJP05', name: 'LinkedIn Newsletter Impressions', type: 'number' },
+  { id: 'TJP06', name: 'LinkedIn Newsletter Members Reached', type: 'number' },
+  { id: 'TJP07', name: 'LinkedIn Newsletter Views', type: 'number' },
   { id: 'TJP02', name: 'Email Newsletter Subs', type: 'number', hasTarget: true },
   { id: 'TJP03', name: 'Podcast Listens', type: 'number', hasTarget: true },
   { id: 'TJP04', name: 'Podcast Downloads', type: 'number' },
+]
+
+export const TJ_ADS_METRICS: CompanyMetric[] = [
+  { id: 'TJA01', name: 'Google Ads Clicks', type: 'number' },
+  { id: 'TJA02', name: 'Google Ads Impressions', type: 'number' },
+  { id: 'TJA03', name: 'Google Ads CTR', type: 'percentage' },
+  { id: 'TJA04', name: 'Google Ads Cost', type: 'number', unit: '₹' },
+  { id: 'TJA05', name: 'Meta Ads CPC', type: 'number', unit: '₹' },
+  { id: 'TJA06', name: 'Meta Ads Cost', type: 'number', unit: '₹' },
+  { id: 'TJA07', name: 'Meta Ads Impressions', type: 'number' },
+  { id: 'TJA08', name: 'Meta Ads Reach', type: 'number' },
 ]
 
 export const TJ_VIDEO_METRICS: CompanyMetric[] = [
