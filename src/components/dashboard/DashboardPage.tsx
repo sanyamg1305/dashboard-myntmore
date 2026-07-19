@@ -688,6 +688,7 @@ export function DashboardPage() {
     linkedin: aggregateChannelRows(monthMmRows, 'linkedin'),
     instagram: aggregateChannelRows(monthMmRows, 'instagram'),
     website: aggregateChannelRows(monthMmRows, 'website'),
+    quora: aggregateChannelRows(monthMmRows, 'quora'),
     reddit: aggregateChannelRows(monthMmRows, 'reddit'),
   }
 
@@ -1681,11 +1682,9 @@ export function DashboardPage() {
                           ]} currentData={isMonthlyView ? monthMmAgg.website : mmData?.website} prevData={isMonthlyView ? null : prevMmData?.website}
                         />
                         <MMContentRow title="Other Channels (Quora/Reddit)" icon={MessageSquare} metrics={[
-                            { id: 'MMO01', name: 'Quora Ans' },
-                            { id: 'MMO02', name: 'Quora Views' },
-                            { id: 'MMO05', name: 'Reddit Posts' },
-                            { id: 'MMO08', name: 'Reddit Views' },
-                          ]} currentData={isMonthlyView ? monthMmAgg.reddit : mmData?.reddit} prevData={isMonthlyView ? null : prevMmData?.reddit}
+                            { id: 'MMO01', name: 'Quora Engagement' },
+                            { id: 'MMO05', name: 'Reddit Engagement' },
+                          ]} currentData={isMonthlyView ? { ...monthMmAgg.quora, ...monthMmAgg.reddit } : { ...mmData?.quora, ...mmData?.reddit }} prevData={isMonthlyView ? null : { ...prevMmData?.quora, ...prevMmData?.reddit }}
                         />
                       </>
                     ) : (
@@ -1902,61 +1901,97 @@ function AhaMomentsAdmin({ clientId }: { clientId: string }) {
 }
 
 function DashboardCampaignsSection({ clientId, displayWeek, onEditCampaign }: { clientId: string, displayWeek: string, onEditCampaign: (c: any) => void }) {
-  const [campaigns, setCampaigns] = useState<any[]>([])
+  const [activeCampaigns, setActiveCampaigns] = useState<any[]>([])
+  const [completedCampaigns, setCompletedCampaigns] = useState<any[]>([])
+  const [campaignTab, setCampaignTab] = useState<'active' | 'completed'>('active')
   const monthWeeks = getWeeksInSameMonth(displayWeek)
 
+  const enrich = async (data: any[]) => {
+    const weekStarts = monthWeeks.map((w: any) => w.weekStart)
+    const { data: cdata } = await supabase
+      .from('campaign_weekly_data')
+      .select('*')
+      .in('campaign_id', data.map(c => c.id))
+      .in('week_start', weekStarts)
+    return data.map(c => {
+      const byWeek: Record<string, any> = {}
+      cdata?.filter(r => r.campaign_id === c.id).forEach(r => { byWeek[r.week_start] = r })
+      return { ...c, byWeek }
+    })
+  }
+
   const load = async () => {
-      const { data } = await supabase
-        .from('campaigns')
-        .select('*')
-        .eq('client_id', clientId)
-        .neq('status', 'completed')
-        .order('created_at', { ascending: true })
+    const { data: allData } = await supabase
+      .from('campaigns')
+      .select('*')
+      .eq('client_id', clientId)
+      .order('created_at', { ascending: true })
 
-      if (!data || data.length === 0) {
-        setCampaigns([])
-        return
-      }
+    if (!allData) return
 
-      const weekStarts = monthWeeks.map((w: any) => w.weekStart)
-      const { data: cdata } = await supabase
-        .from('campaign_weekly_data')
-        .select('*')
-        .in('campaign_id', data.map(c => c.id))
-        .in('week_start', weekStarts)
+    const active = allData.filter(c => c.status !== 'completed')
+    const completed = allData.filter(c => c.status === 'completed')
 
-      const enriched = data.map(c => {
-        const byWeek: Record<string, any> = {}
-        cdata?.filter(r => r.campaign_id === c.id).forEach(r => {
-          byWeek[r.week_start] = r
-        })
-        return { ...c, byWeek }
-      })
+    const [enrichedActive, enrichedCompleted] = await Promise.all([
+      active.length ? enrich(active) : Promise.resolve([]),
+      completed.length ? enrich(completed) : Promise.resolve([]),
+    ])
 
-      setCampaigns(enriched)
+    setActiveCampaigns(enrichedActive)
+    setCompletedCampaigns(enrichedCompleted)
   }
 
   useEffect(() => { load() }, [clientId, displayWeek])
 
-  if (campaigns.length === 0) return null
+  if (activeCampaigns.length === 0 && completedCampaigns.length === 0) return null
+
+  const displayed = campaignTab === 'active' ? activeCampaigns : completedCampaigns
 
   return (
     <div className="mt-8 border-t pt-8">
-      <div className="flex items-center gap-2 pb-4">
-        <Users className="w-4 h-4 text-gold" />
-        <h4 className="text-xs font-black uppercase tracking-widest">Active Campaigns</h4>
+      <div className="flex items-center justify-between pb-4">
+        <div className="flex items-center gap-2">
+          <Users className="w-4 h-4 text-gold" />
+          <h4 className="text-xs font-black uppercase tracking-widest">Campaigns</h4>
+        </div>
+        <div className="flex gap-1">
+          <button
+            onClick={() => setCampaignTab('active')}
+            className={`px-3 py-1 rounded text-xs font-bold border transition-colors ${
+              campaignTab === 'active'
+                ? 'bg-gold text-black border-gold'
+                : 'bg-background border-border text-muted-foreground hover:border-gold hover:text-foreground'
+            }`}
+          >
+            Active {activeCampaigns.length > 0 && `(${activeCampaigns.length})`}
+          </button>
+          <button
+            onClick={() => setCampaignTab('completed')}
+            className={`px-3 py-1 rounded text-xs font-bold border transition-colors ${
+              campaignTab === 'completed'
+                ? 'bg-gold text-black border-gold'
+                : 'bg-background border-border text-muted-foreground hover:border-gold hover:text-foreground'
+            }`}
+          >
+            Completed {completedCampaigns.length > 0 && `(${completedCampaigns.length})`}
+          </button>
+        </div>
       </div>
-      <div className="space-y-4">
-        {campaigns.map(c => (
-          <CampaignMonthTable
-            key={c.id}
-            campaign={c}
-            monthWeeks={monthWeeks}
-            onEdit={onEditCampaign}
-            onWeekSaved={load}
-          />
-        ))}
-      </div>
+      {displayed.length === 0 ? (
+        <p className="text-xs text-muted-foreground py-4">No {campaignTab} campaigns.</p>
+      ) : (
+        <div className="space-y-4">
+          {displayed.map(c => (
+            <CampaignMonthTable
+              key={c.id}
+              campaign={c}
+              monthWeeks={monthWeeks}
+              onEdit={onEditCampaign}
+              onWeekSaved={load}
+            />
+          ))}
+        </div>
+      )}
     </div>
   )
 }

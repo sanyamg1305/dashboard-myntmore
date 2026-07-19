@@ -102,12 +102,6 @@ export const MM_WEBSITE_METRICS: CompanyMetric[] = [
 ]
 
 export const MM_OTHER_METRICS: CompanyMetric[] = [
-  { id: 'MMO01', name: 'Quora: Answers Posted', type: 'number', hasTarget: true },
-  { id: 'MMO02', name: 'Quora: Views', type: 'number', hasTarget: true },
-  { id: 'MMO03', name: 'Quora: Upvotes', type: 'number', hasTarget: true },
-  { id: 'MMO04', name: 'Quora: Profile Views', type: 'number' },
-  { id: 'MMO05', name: 'Reddit: Posts Published', type: 'number', hasTarget: true },
-  { id: 'MMO06', name: 'Reddit: Upvotes', type: 'number', hasTarget: true },
-  { id: 'MMO07', name: 'Reddit: Comments', type: 'number', hasTarget: true },
-  { id: 'MMO08', name: 'Reddit: Post Views', type: 'number', hasTarget: true },
+  { id: 'MMO01', name: 'Quora Engagement', type: 'number', hasTarget: true },
+  { id: 'MMO05', name: 'Reddit Engagement', type: 'number', hasTarget: true },
 ]
