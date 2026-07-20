@@ -83,6 +83,16 @@ export function getWeekOptions(count = 12) {
   })
 }
 
+export function isLastWeekOfMonth(weekStart: string): boolean {
+  const monday = new Date(weekStart + 'T00:00:00Z')
+  const sunday = new Date(monday)
+  sunday.setUTCDate(monday.getUTCDate() + 6)
+  // Last week if Sunday falls in the same month or the next Monday would be in the next month
+  const nextMonday = new Date(monday)
+  nextMonday.setUTCDate(monday.getUTCDate() + 7)
+  return nextMonday.getUTCMonth() !== monday.getUTCMonth() || nextMonday.getUTCFullYear() !== monday.getUTCFullYear()
+}
+
 export function getWeekStart(offsetWeeks: number): string {
   const now = new Date()
   const day = now.getUTCDay()

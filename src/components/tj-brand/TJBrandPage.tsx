@@ -346,7 +346,7 @@ export function TJPersonalBrandPage({ embedded }: { embedded?: boolean } = {}) {
                 </div>
             </TabsContent>
 
-            <div className="flex justify-end gap-3 py-6 border-t">
+<div className="flex justify-end gap-3 py-6 border-t">
               <div className="flex items-center">
                 <SaveIndicator status={saveStatus} lastSaved={lastSaved} />
               </div>

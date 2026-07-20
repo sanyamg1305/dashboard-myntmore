@@ -9,20 +9,22 @@ import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
 import { 
-  History, 
-  Check, 
-  Save, 
+  History,
+  Check,
+  Save,
   Loader2,
   Linkedin,
   Instagram,
   Globe,
-  PlusCircle
+  PlusCircle,
+  TrendingUp
 } from "lucide-react"
-import { 
-  MM_LINKEDIN_METRICS, 
-  MM_INSTAGRAM_METRICS, 
-  MM_WEBSITE_METRICS, 
+import {
+  MM_LINKEDIN_METRICS,
+  MM_INSTAGRAM_METRICS,
+  MM_WEBSITE_METRICS,
   MM_OTHER_METRICS,
+  MM_ADS_METRICS,
   CompanyMetric
 } from "@/data/company_metrics"
 import { BackButton } from "@/components/ui/BackButton"
@@ -49,7 +51,8 @@ export function MMContentPage({ embedded }: { embedded?: boolean } = {}) {
     instagram: {},
     website: {},
     quora: {},
-    reddit: {}
+    reddit: {},
+    ads: {}
   })
 
   useEffect(() => {
@@ -66,12 +69,14 @@ export function MMContentPage({ embedded }: { embedded?: boolean } = {}) {
         .maybeSingle()
       
       if (data) {
+        const row = data as any
         setFormData({
-          linkedin: data.linkedin || {},
-          instagram: data.instagram || {},
-          website: data.website || {},
-          quora: data.quora || {},
-          reddit: data.reddit || {}
+          linkedin: row.linkedin || {},
+          instagram: row.instagram || {},
+          website: row.website || {},
+          quora: row.quora || {},
+          reddit: row.reddit || {},
+          ads: row.ads || {}
         })
       } else {
         setFormData({
@@ -79,7 +84,8 @@ export function MMContentPage({ embedded }: { embedded?: boolean } = {}) {
           instagram: {},
           website: {},
           quora: {},
-          reddit: {}
+          reddit: {},
+          ads: {}
         })
       }
     } catch (error: any) {
@@ -111,6 +117,7 @@ export function MMContentPage({ embedded }: { embedded?: boolean } = {}) {
         website: updated.website,
         quora: updated.quora,
         reddit: updated.reddit,
+        ads: updated.ads,
         submitted_by: user?.id
       })
 
@@ -132,7 +139,7 @@ export function MMContentPage({ embedded }: { embedded?: boolean } = {}) {
               onChange={e => updateMetric(section, metric.id, 'value', e.target.value)}
               className="h-12 text-2xl font-black pr-8"
             />
-            {metric.unit && <span className="absolute right-3 top-1/2 -translate-y-1/2 font-bold text-muted-foreground">{metric.unit}</span>}
+            {(metric.unit || metric.type === 'percentage') && <span className="absolute right-3 top-1/2 -translate-y-1/2 font-bold text-muted-foreground">{metric.unit || '%'}</span>}
           </div>
           {metric.hasTarget && (
             <div className="flex gap-2 pt-2 border-t border-border/30">
@@ -182,7 +189,7 @@ export function MMContentPage({ embedded }: { embedded?: boolean } = {}) {
       </header>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="bg-muted/50 p-1 h-auto grid grid-cols-4 max-w-2xl">
+        <TabsList className="bg-muted/50 p-1 h-auto grid grid-cols-5 max-w-3xl">
           <TabsTrigger value="linkedin" className="py-2.5 font-bold data-[state=active]:bg-gold data-[state=active]:text-black gap-2">
             <Linkedin className="w-4 h-4" /> LinkedIn
           </TabsTrigger>
@@ -194,6 +201,9 @@ export function MMContentPage({ embedded }: { embedded?: boolean } = {}) {
           </TabsTrigger>
           <TabsTrigger value="other" className="py-2.5 font-bold data-[state=active]:bg-gold data-[state=active]:text-black gap-2">
             <PlusCircle className="w-4 h-4" /> Other Channels
+          </TabsTrigger>
+          <TabsTrigger value="ads" className="py-2.5 font-bold data-[state=active]:bg-gold data-[state=active]:text-black gap-2">
+            <TrendingUp className="w-4 h-4" /> Ads
           </TabsTrigger>
         </TabsList>
 
@@ -221,7 +231,22 @@ export function MMContentPage({ embedded }: { embedded?: boolean } = {}) {
             </TabsContent>
             <TabsContent value="other" className="mt-0 space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {MM_OTHER_METRICS.map(m => renderMetricCard('reddit', m))}
+                    {renderMetricCard('quora', MM_OTHER_METRICS[0])}
+                    {renderMetricCard('reddit', MM_OTHER_METRICS[1])}
+                </div>
+            </TabsContent>
+            <TabsContent value="ads" className="mt-0 space-y-6">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-3 border-b pb-1">Google Ads</p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {MM_ADS_METRICS.filter(m => ['MMA01','MMA02','MMA03','MMA04'].includes(m.id)).map(m => renderMetricCard('ads', m))}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-3 border-b pb-1">Meta Ads</p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {MM_ADS_METRICS.filter(m => ['MMA05','MMA06','MMA07','MMA08'].includes(m.id)).map(m => renderMetricCard('ads', m))}
+                  </div>
                 </div>
             </TabsContent>
 
