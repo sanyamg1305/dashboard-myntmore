@@ -37,9 +37,29 @@ export const TJ_YOUTUBE_METRICS: CompanyMetric[] = [
 
 export const TJ_PODCAST_METRICS: CompanyMetric[] = [
   { id: 'TJP01', name: 'LinkedIn Newsletter Subs', type: 'number', hasTarget: true },
+  { id: 'TJP05', name: 'LinkedIn Newsletter Impressions', type: 'number' },
+  { id: 'TJP06', name: 'LinkedIn Newsletter Members Reached', type: 'number' },
+  { id: 'TJP07', name: 'LinkedIn Newsletter Views', type: 'number' },
   { id: 'TJP02', name: 'Email Newsletter Subs', type: 'number', hasTarget: true },
+  { id: 'TJP08', name: 'Emails Sent', type: 'number' },
+  { id: 'TJP09', name: 'Delivery Rate', type: 'percentage' },
+  { id: 'TJP10', name: 'Open Rate', type: 'percentage' },
+  { id: 'TJP11', name: 'Click Rate', type: 'percentage' },
+  { id: 'TJP12', name: 'CTOR (Click-to-Open Rate)', type: 'percentage' },
+  { id: 'TJP13', name: 'Unsubscribe Rate', type: 'percentage' },
   { id: 'TJP03', name: 'Podcast Listens', type: 'number', hasTarget: true },
   { id: 'TJP04', name: 'Podcast Downloads', type: 'number' },
+]
+
+export const MM_ADS_METRICS: CompanyMetric[] = [
+  { id: 'MMA01', name: 'Google Ads Clicks', type: 'number' },
+  { id: 'MMA02', name: 'Google Ads Impressions', type: 'number' },
+  { id: 'MMA03', name: 'Google Ads CTR', type: 'percentage' },
+  { id: 'MMA04', name: 'Google Ads Cost', type: 'number', unit: '₹' },
+  { id: 'MMA05', name: 'Meta Ads CPC', type: 'number', unit: '₹' },
+  { id: 'MMA06', name: 'Meta Ads Cost', type: 'number', unit: '₹' },
+  { id: 'MMA07', name: 'Meta Ads Impressions', type: 'number' },
+  { id: 'MMA08', name: 'Meta Ads Reach', type: 'number' },
 ]
 
 export const TJ_VIDEO_METRICS: CompanyMetric[] = [
@@ -82,12 +102,6 @@ export const MM_WEBSITE_METRICS: CompanyMetric[] = [
 ]
 
 export const MM_OTHER_METRICS: CompanyMetric[] = [
-  { id: 'MMO01', name: 'Quora: Answers Posted', type: 'number', hasTarget: true },
-  { id: 'MMO02', name: 'Quora: Views', type: 'number', hasTarget: true },
-  { id: 'MMO03', name: 'Quora: Upvotes', type: 'number', hasTarget: true },
-  { id: 'MMO04', name: 'Quora: Profile Views', type: 'number' },
-  { id: 'MMO05', name: 'Reddit: Posts Published', type: 'number', hasTarget: true },
-  { id: 'MMO06', name: 'Reddit: Upvotes', type: 'number', hasTarget: true },
-  { id: 'MMO07', name: 'Reddit: Comments', type: 'number', hasTarget: true },
-  { id: 'MMO08', name: 'Reddit: Post Views', type: 'number', hasTarget: true },
+  { id: 'MMO01', name: 'Quora Engagement', type: 'number', hasTarget: true },
+  { id: 'MMO05', name: 'Reddit Engagement', type: 'number', hasTarget: true },
 ]

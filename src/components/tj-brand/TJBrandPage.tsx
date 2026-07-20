@@ -8,20 +8,20 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner"
-import { 
-  History, 
-  Check, 
-  Save, 
+import {
+  History,
+  Check,
+  Save,
   Loader2,
   Instagram,
   Youtube,
   Mic,
   Video
 } from "lucide-react"
-import { 
-  TJ_INSTAGRAM_METRICS, 
-  TJ_YOUTUBE_METRICS, 
-  TJ_PODCAST_METRICS, 
+import {
+  TJ_INSTAGRAM_METRICS,
+  TJ_YOUTUBE_METRICS,
+  TJ_PODCAST_METRICS,
   TJ_VIDEO_METRICS,
   CompanyMetric
 } from "@/data/company_metrics"
@@ -133,8 +133,8 @@ export function TJPersonalBrandPage({ embedded }: { embedded?: boolean } = {}) {
         week_label: weekInfo?.label || '',
         instagram: updated.instagram,
         youtube: updated.youtube,
-        linkedin_newsletter: { TJP01: updated.newsletter_podcast?.TJP01 },
-        email_newsletter: { TJP02: updated.newsletter_podcast?.TJP02 },
+        linkedin_newsletter: { TJP01: updated.newsletter_podcast?.TJP01, TJP05: updated.newsletter_podcast?.TJP05, TJP06: updated.newsletter_podcast?.TJP06, TJP07: updated.newsletter_podcast?.TJP07 },
+        email_newsletter: { TJP02: updated.newsletter_podcast?.TJP02, TJP08: updated.newsletter_podcast?.TJP08, TJP09: updated.newsletter_podcast?.TJP09, TJP10: updated.newsletter_podcast?.TJP10, TJP11: updated.newsletter_podcast?.TJP11, TJP12: updated.newsletter_podcast?.TJP12, TJP13: updated.newsletter_podcast?.TJP13 },
         podcast: { TJP03: updated.newsletter_podcast?.TJP03, TJP04: updated.newsletter_podcast?.TJP04 },
         video_pipeline: updated.video_pipeline,
         submitted_by: user?.id
@@ -184,7 +184,7 @@ export function TJPersonalBrandPage({ embedded }: { embedded?: boolean } = {}) {
               onChange={e => updateMetric(section, metric.id, 'value', e.target.value)}
               className="h-12 text-2xl font-black pr-8"
             />
-            {metric.unit && <span className="absolute right-3 top-1/2 -translate-y-1/2 font-bold text-muted-foreground">{metric.unit}</span>}
+            {(metric.unit || metric.type === 'percentage') && <span className="absolute right-3 top-1/2 -translate-y-1/2 font-bold text-muted-foreground">{metric.unit || '%'}</span>}
           </div>
           {metric.hasTarget && (
             <div className="flex gap-2 pt-2 border-t border-border/30">
@@ -297,9 +297,24 @@ export function TJPersonalBrandPage({ embedded }: { embedded?: boolean } = {}) {
                     {TJ_YOUTUBE_METRICS.map(m => renderMetricCard('youtube', m))}
                 </div>
             </TabsContent>
-            <TabsContent value="podcast" className="mt-0">
-                <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {TJ_PODCAST_METRICS.map(m => renderMetricCard('newsletter_podcast', m))}
+            <TabsContent value="podcast" className="mt-0 space-y-6">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-3 border-b pb-1">LinkedIn Newsletter</p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {TJ_PODCAST_METRICS.filter(m => ['TJP01','TJP05','TJP06','TJP07'].includes(m.id)).map(m => renderMetricCard('newsletter_podcast', m))}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-3 border-b pb-1">Email Newsletter</p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {TJ_PODCAST_METRICS.filter(m => ['TJP02','TJP08','TJP09','TJP10','TJP11','TJP12','TJP13'].includes(m.id)).map(m => renderMetricCard('newsletter_podcast', m))}
+                  </div>
+                </div>
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-3 border-b pb-1">Podcast</p>
+                  <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                    {TJ_PODCAST_METRICS.filter(m => ['TJP03','TJP04'].includes(m.id)).map(m => renderMetricCard('newsletter_podcast', m))}
+                  </div>
                 </div>
             </TabsContent>
             <TabsContent value="pipeline" className="mt-0">
@@ -308,7 +323,7 @@ export function TJPersonalBrandPage({ embedded }: { embedded?: boolean } = {}) {
                 </div>
             </TabsContent>
 
-            <div className="flex justify-end gap-3 py-6 border-t">
+<div className="flex justify-end gap-3 py-6 border-t">
               <div className="flex items-center">
                 <SaveIndicator status={saveStatus} lastSaved={lastSaved} />
               </div>

@@ -21,7 +21,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
 import { BackButton } from "@/components/ui/BackButton"
-import { getCurrentWeekStart, getWeekEnd, getWeekLabel, getWeekOptions } from "@/utils/weekUtils"
+import { getCurrentWeekStart, getWeekEnd, getWeekLabel, getWeekOptions, isLastWeekOfMonth } from "@/utils/weekUtils"
 import { readMetric, formatMetricValue } from "@/utils/dataUtils"
 import { detectAndUpdateHighScores } from '@/utils/highScores'
 import { formatWeekDate } from '@/utils/dateUtils'
@@ -406,7 +406,9 @@ export function DataEntryPage() {
 
   const groupedMetrics = (metrics: Metric[]) => {
     const groups: Record<string, Metric[]> = {}
+    const lastWeek = isLastWeekOfMonth(selectedWeek)
     metrics.forEach(m => {
+      if (m.group === 'Delivery & Reporting' && !lastWeek) return
       if (!groups[m.group]) groups[m.group] = []
       groups[m.group].push(m)
     })
@@ -458,6 +460,55 @@ export function DataEntryPage() {
     const [selectedCalibrateWeeks, setSelectedCalibrateWeeks] = useState<string[]>([])
     const [calibrating, setCalibrating] = useState(false)
     const autosaveTimers = React.useRef<Record<string, ReturnType<typeof setTimeout>>>({})
+
+    // Per-campaign week selection for inactive/completed campaigns
+    const [inactiveCampaignWeekMap, setInactiveCampaignWeekMap] = useState<Record<string, string>>({}) // campaignId -> selected week
+    const [inactiveCampaignAllData, setInactiveCampaignAllData] = useState<Record<string, any[]>>({}) // campaignId -> all weekly rows
+
+    const loadInactiveCampaignHistory = async (campaignId: string) => {
+      if (inactiveCampaignAllData[campaignId]) return // already loaded
+      const { data } = await supabase
+        .from('campaign_weekly_data')
+        .select('*')
+        .eq('campaign_id', campaignId)
+        .order('week_start', { ascending: false })
+      const rows = data || []
+      setInactiveCampaignAllData(prev => ({ ...prev, [campaignId]: rows }))
+      if (rows.length > 0 && !inactiveCampaignWeekMap[campaignId]) {
+        const latestWeek = rows[0].week_start
+        setInactiveCampaignWeekMap(prev => ({ ...prev, [campaignId]: latestWeek }))
+        setLocalCampaignData(prev => ({
+          ...prev,
+          [campaignId]: {
+            conn_requests_sent: rows[0].conn_requests_sent ?? '',
+            accepted: rows[0].accepted ?? '',
+            answered: rows[0].answered ?? '',
+            positive_replies: rows[0].positive_replies ?? '',
+            negative_replies: rows[0].negative_replies ?? '',
+            meetings_booked: rows[0].meetings_booked ?? '',
+            notes: rows[0].notes ?? ''
+          }
+        }))
+      }
+    }
+
+    const switchInactiveCampaignWeek = (campaignId: string, weekStart: string) => {
+      setInactiveCampaignWeekMap(prev => ({ ...prev, [campaignId]: weekStart }))
+      const rows = inactiveCampaignAllData[campaignId] || []
+      const row = rows.find((r: any) => r.week_start === weekStart)
+      setLocalCampaignData(prev => ({
+        ...prev,
+        [campaignId]: row ? {
+          conn_requests_sent: row.conn_requests_sent ?? '',
+          accepted: row.accepted ?? '',
+          answered: row.answered ?? '',
+          positive_replies: row.positive_replies ?? '',
+          negative_replies: row.negative_replies ?? '',
+          meetings_booked: row.meetings_booked ?? '',
+          notes: row.notes ?? ''
+        } : { conn_requests_sent: '', accepted: '', answered: '', positive_replies: '', negative_replies: '', meetings_booked: '', notes: '' }
+      }))
+    }
 
     // Existing Connections State
     const [existingConnSent, setExistingConnSent] = useState<string>('')
@@ -739,13 +790,16 @@ export function DataEntryPage() {
     const saveCampaignData = async (campaignId: string, silent = false) => {
         const data = localCampaignDataRef.current[campaignId]
         if (!data) return
-        const weekInfo = weekOptions.find(w => w.weekStart === selectedWeek)
+        // Use the per-campaign selected week for inactive campaigns, otherwise the global selected week
+        const effectiveWeek = inactiveCampaignWeekMap[campaignId] || selectedWeek
+        const weekInfo = weekOptions.find(w => w.weekStart === effectiveWeek)
+          || { weekEnd: '', label: effectiveWeek }
 
         try {
             const payload = {
                 campaign_id: campaignId,
                 client_id: selectedClientId,
-                week_start: selectedWeek,
+                week_start: effectiveWeek,
                 week_end: weekInfo?.weekEnd ?? '',
                 week_label: weekInfo?.label ?? '',
                 conn_requests_sent: Number(data.conn_requests_sent) || 0,
@@ -1324,10 +1378,12 @@ export function DataEntryPage() {
                             const accRate = calcRateCapped(ac, cs)
                             const respRate = calcRateCapped(an, ac)
                             const status = saveStatus[campaign.id]
+                            const campaignHistory = inactiveCampaignAllData[campaign.id] || []
+                            const selectedInactiveWeek = inactiveCampaignWeekMap[campaign.id] || ''
 
                             return (
-                                <AccordionItem key={campaign.id} value={campaign.id} className="border rounded-lg bg-card overflow-hidden opacity-70">
-                                    <AccordionTrigger className="px-4 py-3 hover:bg-muted/30 hover:no-underline">
+                                <AccordionItem key={campaign.id} value={campaign.id} className="border rounded-lg bg-card overflow-hidden">
+                                    <AccordionTrigger className="px-4 py-3 hover:bg-muted/30 hover:no-underline" onClick={() => loadInactiveCampaignHistory(campaign.id)}>
                                         <div className="flex items-center gap-4 text-left flex-1">
                                             <div className="space-y-0.5 flex-1">
                                                 <div className="flex items-center gap-2">
@@ -1377,41 +1433,79 @@ export function DataEntryPage() {
                                         </div>
                                     </AccordionTrigger>
                                     <AccordionContent className="p-4 pt-0 border-t bg-muted/5">
-                                        <div className="space-y-6 mt-4 pointer-events-none opacity-80">
-                                            {/* Read-only view of inactive campaigns */}
+                                        <div className="space-y-6 mt-4">
+                                            {/* Week selector for inactive/completed campaigns */}
+                                            <div className="flex items-center gap-3 flex-wrap">
+                                              <span className="text-[10px] font-bold uppercase text-muted-foreground">Viewing Week:</span>
+                                              {campaignHistory.length === 0 ? (
+                                                <span className="text-xs text-muted-foreground italic">No data recorded yet — enter below to add.</span>
+                                              ) : (
+                                                <div className="flex gap-1.5 flex-wrap">
+                                                  {campaignHistory.map((row: any) => (
+                                                    <button
+                                                      key={row.week_start}
+                                                      onClick={() => switchInactiveCampaignWeek(campaign.id, row.week_start)}
+                                                      className={`px-2.5 py-1 rounded text-[11px] font-bold border transition-colors ${
+                                                        selectedInactiveWeek === row.week_start
+                                                          ? 'bg-gold text-black border-gold'
+                                                          : 'bg-background border-border text-muted-foreground hover:border-gold hover:text-foreground'
+                                                      }`}
+                                                    >
+                                                      {row.week_label || row.week_start}
+                                                    </button>
+                                                  ))}
+                                                  <button
+                                                    onClick={() => switchInactiveCampaignWeek(campaign.id, selectedWeek)}
+                                                    className={`px-2.5 py-1 rounded text-[11px] font-bold border transition-colors ${
+                                                      selectedInactiveWeek === selectedWeek
+                                                        ? 'bg-gold text-black border-gold'
+                                                        : 'bg-background border-border text-muted-foreground hover:border-gold hover:text-foreground'
+                                                    }`}
+                                                  >
+                                                    + New Entry ({selectedWeek})
+                                                  </button>
+                                                </div>
+                                              )}
+                                            </div>
                                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                                 <div className="space-y-2">
                                                     <Label className="text-[10px] font-bold uppercase text-muted-foreground">Outreach</Label>
                                                     <div className="grid grid-cols-2 gap-2">
                                                         <div className="space-y-1">
                                                             <Label className="text-[9px] uppercase">Conn Sent</Label>
-                                                            <Input type="number" value={data.conn_requests_sent ?? ''} readOnly />
+                                                            <Input type="number" placeholder="-" value={data.conn_requests_sent ?? ''} onChange={(e) => handleCampaignChange(campaign.id, 'conn_requests_sent', e.target.value)} />
                                                         </div>
                                                         <div className="space-y-1">
                                                             <Label className="text-[9px] uppercase">Accepted</Label>
-                                                            <Input type="number" value={data.accepted ?? ''} readOnly />
+                                                            <Input type="number" placeholder="-" value={data.accepted ?? ''} onChange={(e) => handleCampaignChange(campaign.id, 'accepted', e.target.value)} />
                                                         </div>
                                                     </div>
+                                                    <p className="text-[10px] font-bold text-gold">Acceptance Rate: {fmtRate(accRate)}</p>
                                                 </div>
                                                 <div className="space-y-2">
                                                     <Label className="text-[10px] font-bold uppercase text-muted-foreground">Engagement</Label>
                                                     <div className="grid grid-cols-3 gap-2">
                                                         <div className="space-y-1">
                                                             <Label className="text-[9px] uppercase">Answered</Label>
-                                                            <Input type="number" value={data.answered ?? ''} readOnly />
+                                                            <Input type="number" placeholder="-" value={data.answered ?? ''} onChange={(e) => handleCampaignChange(campaign.id, 'answered', e.target.value)} />
                                                         </div>
                                                         <div className="space-y-1">
                                                             <Label className="text-[9px] uppercase">Positive</Label>
-                                                            <Input type="number" value={data.positive_replies ?? ''} readOnly />
+                                                            <Input type="number" placeholder="-" value={data.positive_replies ?? ''} onChange={(e) => handleCampaignChange(campaign.id, 'positive_replies', e.target.value)} />
+                                                        </div>
+                                                        <div className="space-y-1">
+                                                            <Label className="text-[9px] uppercase">Negative</Label>
+                                                            <Input type="number" placeholder="-" value={data.negative_replies ?? ''} onChange={(e) => handleCampaignChange(campaign.id, 'negative_replies', e.target.value)} />
                                                         </div>
                                                     </div>
+                                                    <p className="text-[10px] font-bold text-gold">Response Rate: {fmtRate(respRate)}</p>
                                                 </div>
                                                 <div className="space-y-2">
                                                     <Label className="text-[10px] font-bold uppercase text-muted-foreground">Results</Label>
                                                     <div className="grid grid-cols-1 gap-2">
                                                         <div className="space-y-1">
                                                             <Label className="text-[9px] uppercase">Meetings</Label>
-                                                            <Input type="number" value={data.meetings_booked ?? ''} readOnly />
+                                                            <Input type="number" placeholder="-" value={data.meetings_booked ?? ''} onChange={(e) => handleCampaignChange(campaign.id, 'meetings_booked', e.target.value)} />
                                                         </div>
                                                     </div>
                                                 </div>
@@ -1419,8 +1513,14 @@ export function DataEntryPage() {
                                             <div className="pt-2">
                                                 <div className="space-y-2">
                                                     <Label className="text-[10px] font-bold uppercase text-muted-foreground">Notes</Label>
-                                                    <Input value={data.notes ?? ''} readOnly />
+                                                    <Input value={data.notes ?? ''} onChange={(e) => handleCampaignChange(campaign.id, 'notes', e.target.value)} placeholder="Campaign specific notes..." />
                                                 </div>
+                                            </div>
+                                            <div className="pt-4 border-t flex justify-between items-center">
+                                                <p className="text-[10px] italic text-muted-foreground">Message Narrative: {campaign.message_narrative || 'None'}</p>
+                                                <Button onClick={() => saveCampaignData(campaign.id)} size="sm" className="bg-gold/10 text-gold hover:bg-gold/20 font-bold h-8">
+                                                    Save Campaign Data
+                                                </Button>
                                             </div>
                                         </div>
                                     </AccordionContent>
