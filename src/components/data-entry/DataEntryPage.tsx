@@ -1791,7 +1791,7 @@ export function DataEntryPage() {
         <div className="flex flex-col md:flex-row gap-4 w-full md:w-auto">
           <div className="space-y-1.5 min-w-[240px]">
             <Label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Select Week</Label>
-            <Select value={selectedWeek} onValueChange={setSelectedWeek}>
+            <Select value={selectedWeek} onValueChange={(v) => { cancelContentAutoSave(); formDataRef.current = {}; setFormData({}); setSelectedWeek(v) }}>
               <SelectTrigger className="bg-background font-bold h-11">
                 <SelectValue />
               </SelectTrigger>
@@ -1802,7 +1802,7 @@ export function DataEntryPage() {
           </div>
           <div className="space-y-1.5 min-w-[240px]">
             <Label className="text-[10px] uppercase font-bold text-muted-foreground ml-1">Select Client</Label>
-            <Select value={selectedClientId || ""} onValueChange={setSelectedClientId}>
+            <Select value={selectedClientId || ""} onValueChange={(v) => { cancelContentAutoSave(); formDataRef.current = {}; setFormData({}); setSelectedClientId(v) }}>
               <SelectTrigger className="bg-background font-bold h-11">
                 <SelectValue placeholder="Choose client" />
               </SelectTrigger>
