@@ -60,7 +60,7 @@ const _syncAllCampaignTotalsInner = async (clientId: string, weekStart: string) 
     L13: { ...(typeof current.L13 === 'object' ? current.L13 : {}), value: answered },
     L15: { ...(typeof current.L15 === 'object' ? current.L15 : {}), value: positive },
     L16: { ...(typeof current.L16 === 'object' ? current.L16 : {}), value: negative },
-    L23: { ...(typeof current.L23 === 'object' ? current.L23 : {}), value: hotLeads },
+    L22: { ...(typeof current.L22 === 'object' ? current.L22 : {}), value: hotLeads },
     L24: { ...(typeof current.L24 === 'object' ? current.L24 : {}), value: meetings },
     L19: { ...(typeof current.L19 === 'object' ? current.L19 : {}), value: existSent },
     L20: { ...(typeof current.L20 === 'object' ? current.L20 : {}), value: existRply },

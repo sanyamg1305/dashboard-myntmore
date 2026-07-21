@@ -106,6 +106,40 @@ export function DataEntryPage() {
     }
   })
 
+  const buildMetricsPayload = (metrics: Metric[], source: Record<string, any>) => {
+    const payload: Record<string, any> = {}
+    metrics.forEach((metric) => {
+      if (metric.type !== 'auto') payload[metric.id] = source[metric.id] || {}
+    })
+    return payload
+  }
+
+  const queueTabSave = (
+    source: Record<string, any>,
+    tab: 'content' | 'leadgen',
+    immediate = false,
+  ) => {
+    if (!selectedClientId || !selectedWeek) return
+
+    const weekInfo = weekOptions.find(w => w.weekStart === selectedWeek)
+    const payload = {
+      week_end: weekInfo?.weekEnd || getWeekEnd(selectedWeek),
+      week_label: weekInfo?.label || getWeekLabel(selectedWeek),
+      ...(tab === 'content'
+        ? {
+            content_metrics: buildMetricsPayload(CONTENT_METRICS, source),
+            content_submitted_at: new Date().toISOString(),
+          }
+        : {
+            leadgen_metrics: buildMetricsPayload(LEADGEN_METRICS, source),
+            leadgen_submitted_at: new Date().toISOString(),
+          }),
+    }
+
+    if (immediate) saveContentNow(payload)
+    else triggerContentSave(payload)
+  }
+
   useEffect(() => {
     const fetchClients = async () => {
       // Always fetch all active clients for everyone
@@ -198,17 +232,7 @@ export function DataEntryPage() {
 
   const handleTabChange = (tab: 'content' | 'leadgen') => {
     if (selectedClientId && selectedWeek) {
-      const weekInfo = weekOptions.find(w => w.weekStart === selectedWeek)
-      const contentMetricsPayload: Record<string, any> = {}
-      CONTENT_METRICS.forEach(m => {
-        if (m.type !== 'auto') contentMetricsPayload[m.id] = formDataRef.current[m.id] || {}
-      })
-      saveContentNow({
-        week_end: weekInfo?.weekEnd || getWeekEnd(selectedWeek),
-        week_label: weekInfo?.label || getWeekLabel(selectedWeek),
-        content_metrics: contentMetricsPayload,
-        content_submitted_at: new Date().toISOString(),
-      })
+      queueTabSave(formDataRef.current, activeTab, true)
     }
     setActiveTab(tab)
   }
@@ -275,21 +299,7 @@ export function DataEntryPage() {
     }
     setFormData(updatedFormData)
 
-    if (selectedClientId && selectedWeek) {
-      const weekInfo = weekOptions.find(w => w.weekStart === selectedWeek)
-      // Build the full content_metrics payload so the debounced autosave
-      // actually persists metric values (not just week_end / week_label).
-      const contentMetricsPayload: Record<string, any> = {}
-      CONTENT_METRICS.forEach(m => {
-        if (m.type !== 'auto') contentMetricsPayload[m.id] = updatedFormData[m.id] || {}
-      })
-      triggerContentSave({
-        week_end: weekInfo?.weekEnd || getWeekEnd(selectedWeek),
-        week_label: weekInfo?.label || getWeekLabel(selectedWeek),
-        content_metrics: contentMetricsPayload,
-        content_submitted_at: new Date().toISOString(),
-      })
-    }
+    queueTabSave(updatedFormData, activeTab)
   }
 
   const handleSave = async (isSubmit = false, isAutoSave = false) => {
@@ -528,7 +538,7 @@ export function DataEntryPage() {
         setExistingConnSent(lm?.L19?.value ?? '')
         setExistingConnReplied(lm?.L20?.value ?? '')
         setExistingConnHotLeads(lm?.L22?.value ?? '')
-        setExistingConnNotes(lm?.L28?.value ?? '')
+        setExistingConnNotes(lm?.existing_connections_notes?.value ?? '')
     }, [weeklyData])
 
     // InMail Outreach State
@@ -586,7 +596,7 @@ export function DataEntryPage() {
                     L19: { value: current.sent === '' ? 0 : Number(current.sent) },
                     L20: { value: current.replied === '' ? 0 : Number(current.replied) },
                     L22: { value: current.hotLeads === '' ? 0 : Number(current.hotLeads) },
-                    L28: { value: current.notes || '' },
+                    existing_connections_notes: { value: current.notes || '' },
                 }
 
                 const weekInfo = weekOptions.find(w => w.weekStart === selectedWeek)
@@ -713,7 +723,7 @@ export function DataEntryPage() {
               L19: { value: c.sent === '' ? 0 : Number(c.sent) },
               L20: { value: c.replied === '' ? 0 : Number(c.replied) },
               L22: { value: c.hotLeads === '' ? 0 : Number(c.hotLeads) },
-              L28: { value: c.notes || '' },
+              existing_connections_notes: { value: c.notes || '' },
             },
             leadgen_submitted_at: new Date().toISOString(),
           }, { onConflict: 'client_id,week_start' })
@@ -817,7 +827,7 @@ export function DataEntryPage() {
 
             if (error) throw error
 
-            await syncAllCampaignTotals(selectedClientId!, selectedWeek)
+            await syncAllCampaignTotals(selectedClientId!, effectiveWeek)
 
             setSaveStatus(prev => ({ ...prev, [campaignId]: 'saved' }))
             if (!silent) toast.success("Campaign data saved")
@@ -1888,4 +1898,3 @@ export function DataEntryPage() {
   </div>
   )
 }
-

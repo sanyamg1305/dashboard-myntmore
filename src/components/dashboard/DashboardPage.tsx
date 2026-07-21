@@ -1270,7 +1270,7 @@ export function DashboardPage() {
                                       </div>
                                       <div className="text-center w-14 shrink-0">
                                         <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">Hot Leads</p>
-                                        <p className="text-sm font-black">{formatDashboardValue(built?.L23, 'L23')}</p>
+                                        <p className="text-sm font-black">{formatDashboardValue(built?.L22 ?? mv(currentData, 'leadgen_metrics', 'L23'), 'L22')}</p>
                                       </div>
                                       <div className="text-center w-12 shrink-0">
                                         <p className="text-[9px] font-black uppercase text-muted-foreground mb-1">Booked</p>
