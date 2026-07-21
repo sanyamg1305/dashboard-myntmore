@@ -861,19 +861,8 @@ export function DashboardPage() {
 
   useEffect(() => {
     const initWeek = async () => {
-      const thisWeek = getCurrentWeekStart()  // 2026-05-11
-      const lastWeek = getPreviousWeekStart() // 2026-05-04
-
-      // Check if this week has any data at all
-      const { data } = await supabase
-        .from('weekly_data')
-        .select('id')
-        .eq('week_start', thisWeek)
-        .limit(1)
-
-      const best = (data && data.length > 0) ? thisWeek : lastWeek
-      console.log('Auto-selected week:', best)
-      setDisplayWeek(best)
+      // The dashboard always reviews the week that just ended, not the in-progress week.
+      setDisplayWeek(getPreviousWeekStart())
     }
     if (session) {
       initWeek()

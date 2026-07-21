@@ -222,6 +222,7 @@ export function DataEntryPage() {
           note: val?.note ?? ''
         }
       })
+      formDataRef.current = initialForm
       setFormData(initialForm)
     } catch (error: any) {
       toast.error(error.message)
@@ -297,6 +298,7 @@ export function DataEntryPage() {
         [field]: value
       }
     }
+    formDataRef.current = updatedFormData
     setFormData(updatedFormData)
 
     queueTabSave(updatedFormData, activeTab)
@@ -576,6 +578,10 @@ export function DataEntryPage() {
         if (field === 'replied') setExistingConnReplied(val)
         if (field === 'hotLeads') setExistingConnHotLeads(val)
         if (field === 'notes') setExistingConnNotes(val)
+        existingConnRef.current = {
+          ...existingConnRef.current,
+          [field]: val
+        }
 
         if (existingConnTimer.current) clearTimeout(existingConnTimer.current)
         setExistingConnSaveStatus('saving')
@@ -624,6 +630,10 @@ export function DataEntryPage() {
         if (field === 'accepted') setInmailAccepted(val)
         if (field === 'declined') setInmailDeclined(val)
         if (field === 'hotLeads') setInmailHotLeads(val)
+        inmailRef.current = {
+          ...inmailRef.current,
+          [field]: val
+        }
 
         if (inmailTimer.current) clearTimeout(inmailTimer.current)
         setInmailSaveStatus('saving')
@@ -784,10 +794,12 @@ export function DataEntryPage() {
 
 
     const handleCampaignChange = (campaignId: string, field: string, value: any) => {
-        setLocalCampaignData(prev => ({
-            ...prev,
-            [campaignId]: { ...prev[campaignId], [field]: value }
-        }))
+        const updatedCampaignData = {
+            ...localCampaignDataRef.current,
+            [campaignId]: { ...localCampaignDataRef.current[campaignId], [field]: value }
+        }
+        localCampaignDataRef.current = updatedCampaignData
+        setLocalCampaignData(updatedCampaignData)
 
         // Debounced autosave
         if (autosaveTimers.current[campaignId]) clearTimeout(autosaveTimers.current[campaignId])
@@ -1875,11 +1887,11 @@ export function DataEntryPage() {
           </div>
         ) : (
           <>
-            <TabsContent value="content">
+            <TabsContent value="content" forceMount>
               {renderMetrics(CONTENT_METRICS.filter(m => m.group !== 'Qualitative'))}
               {renderContentQualitative()}
             </TabsContent>
-            <TabsContent value="leadgen">
+            <TabsContent value="leadgen" forceMount>
               <LeadGenCampaignEntry />
               {renderLeadgenQualitative()}
             </TabsContent>
