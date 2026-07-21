@@ -690,6 +690,7 @@ export function DashboardPage() {
     website: aggregateChannelRows(monthMmRows, 'website'),
     quora: aggregateChannelRows(monthMmRows, 'quora'),
     reddit: aggregateChannelRows(monthMmRows, 'reddit'),
+    ads: aggregateChannelRows(monthMmRows, 'ads'),
   }
 
   const TJChannelCard = ({ title, icon: Icon, metrics, currentData, prevData }: { title: string, icon: any, metrics: any[], currentData: any, prevData: any }) => (
@@ -1685,6 +1686,17 @@ export function DashboardPage() {
                             { id: 'MMO01', name: 'Quora Engagement' },
                             { id: 'MMO05', name: 'Reddit Engagement' },
                           ]} currentData={isMonthlyView ? { ...monthMmAgg.quora, ...monthMmAgg.reddit } : { ...mmData?.quora, ...mmData?.reddit }} prevData={isMonthlyView ? null : { ...prevMmData?.quora, ...prevMmData?.reddit }}
+                        />
+                        <MMContentRow title="Ads Performance" icon={TrendingUp} metrics={[
+                            { id: 'MMA01', name: 'Google Clicks' },
+                            { id: 'MMA02', name: 'Google Impressions' },
+                            { id: 'MMA03', name: 'Google CTR', unit: '%' },
+                            { id: 'MMA04', name: 'Google Cost', unit: '₹' },
+                            { id: 'MMA05', name: 'Meta CPC', unit: '₹' },
+                            { id: 'MMA06', name: 'Meta Cost', unit: '₹' },
+                            { id: 'MMA07', name: 'Meta Impressions' },
+                            { id: 'MMA08', name: 'Meta Reach' },
+                          ]} currentData={isMonthlyView ? monthMmAgg.ads : (mmData as any)?.ads} prevData={isMonthlyView ? null : (prevMmData as any)?.ads}
                         />
                       </>
                     ) : (
